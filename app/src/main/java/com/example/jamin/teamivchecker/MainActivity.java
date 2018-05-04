@@ -8,7 +8,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends ScreenshotDetectionActivity {
     public final static int REQUEST_CODE = 5462;
     private ScreenshotCheck mScreenshotCheck;
 
@@ -19,12 +19,14 @@ public class MainActivity extends AppCompatActivity {
         checkDrawOverlayPermission();
 
         // Screenshot detector credits from https://github.com/abangfadli/shotwatch
+        /*
         mScreenshotCheck = new ScreenshotCheck(getContentResolver(), new ScreenshotCheck.Listener() {
             @Override
             public void onScreenShotTaken(ScreenshotData screenshotData) {
                 Toast.makeText(getApplicationContext(), screenshotData.getFileName(), Toast.LENGTH_SHORT).show();
             }
         });
+        */
     }
 
 // Overlay code from https://stackoverflow.com/questions/7569937/unable-to-add-window-android-view-viewrootw44da9bc0-permission-denied-for-t
@@ -64,15 +66,29 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        /*
         mScreenshotCheck.register();
         Toast.makeText(getApplicationContext(), "mScreenshotCheck registered", Toast.LENGTH_SHORT).show();
+        */
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        /*
         mScreenshotCheck.unregister();
         Toast.makeText(getApplicationContext(), "mScreenshotCheck unregistered", Toast.LENGTH_SHORT).show();
+        */
     }
 
+    @Override
+    public void onScreenCaptured(String path) {
+        Log.d("onScreenCaptured: ", path);
+        Toast.makeText(this, path, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onScreenCapturedWithDeniedPermission() {
+        Toast.makeText(this, "Please grant read external storage permission for screenshot detection", Toast.LENGTH_SHORT).show();
+    }
 }
