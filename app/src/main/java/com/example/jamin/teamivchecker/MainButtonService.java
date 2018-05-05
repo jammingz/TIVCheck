@@ -71,9 +71,12 @@ public class MainButtonService extends Service{
                     // single tap
                     Log.d("MainButtonService", "onClick() triggered");
 
+                    /*
                     View rootView = v.getRootView();
                     store(getScreenShot(rootView), "TestSS01.PNG");
                     Toast.makeText(v.getContext(), "Saving Screenshot to TestSS01.PNG",Toast.LENGTH_SHORT).show();
+
+                    */
                     return true;
                 } else {
                     // your code for move and drag
@@ -104,6 +107,7 @@ public class MainButtonService extends Service{
 
     }
 
+    /*
 
     public static Bitmap getScreenShot(View view) {
         Log.d("MainButtonService", "getScreenshot() called");
@@ -146,6 +150,7 @@ public class MainButtonService extends Service{
         }
     }
 
+*/
     // https://stackoverflow.com/questions/19538747/how-to-use-both-ontouch-and-onclick-for-an-imagebutton
     private class SingleTapConfirm extends GestureDetector.SimpleOnGestureListener {
 

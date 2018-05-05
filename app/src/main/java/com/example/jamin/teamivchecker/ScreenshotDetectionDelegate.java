@@ -78,7 +78,7 @@ public class ScreenshotDetectionDelegate {
             Cursor cursor = context.getContentResolver().query(uri, new String[]{
                     MediaStore.Images.Media.DISPLAY_NAME,
                     MediaStore.Images.Media.DATA
-            }, null, null, null);
+            }, null, null, MediaStore.Images.Media.DATA + " DESC");
             if (cursor != null && cursor.moveToFirst()) {
                 String path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
                 cursor.close();

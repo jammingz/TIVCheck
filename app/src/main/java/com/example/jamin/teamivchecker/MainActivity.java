@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -29,7 +30,8 @@ public class MainActivity extends ScreenshotDetectionActivity {
         */
     }
 
-// Overlay code from https://stackoverflow.com/questions/7569937/unable-to-add-window-android-view-viewrootw44da9bc0-permission-denied-for-t
+
+    // Overlay code from https://stackoverflow.com/questions/7569937/unable-to-add-window-android-view-viewrootw44da9bc0-permission-denied-for-t
     public void checkDrawOverlayPermission() {
         /** check if we already  have permission to draw over other apps */
         if (!Settings.canDrawOverlays(getApplicationContext())) {
@@ -40,9 +42,9 @@ public class MainActivity extends ScreenshotDetectionActivity {
             /** request permission via start activity for result */
 
 
-            startActivityForResult(intent, REQUEST_CODE);
+//            startActivityForResult(intent, REQUEST_CODE);
         } else {
-            startService(new Intent(getApplicationContext(), MainButtonService.class));
+//            startService(new Intent(getApplicationContext(), MainButtonService.class));
         }
     }
 
@@ -85,6 +87,16 @@ public class MainActivity extends ScreenshotDetectionActivity {
     public void onScreenCaptured(String path) {
         Log.d("onScreenCaptured: ", path);
         Toast.makeText(this, path, Toast.LENGTH_SHORT).show();
+
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+
+        // Debug path
+        String path2 = "/storage/emulated/0/Pictures/Screenshots/Screenshot_20180504-145015.png";
+        ScreenshotEditor editor = new ScreenshotEditor(path2, displayMetrics);
+        editor.testFindPixel();
+        //editor.extractColor();
+
     }
 
     @Override
