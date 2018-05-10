@@ -23,12 +23,14 @@ import java.io.FileOutputStream;
 
 public class MainButtonService extends Service{
     private WindowManager windowManager;
+    private View mOverlayView;
     private ImageView mainButton;
     private GestureDetector gestureDetector;
     private int initialX;
     private int initialY;
     private float initialTouchX;
     private float initialTouchY;
+    private boolean isOverlayOn;
     final static String dirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Screenshots";
 
     @Override public IBinder onBind(Intent intent) {
@@ -39,10 +41,40 @@ public class MainButtonService extends Service{
     @Override public void onCreate() {
         super.onCreate();
 
+        isOverlayOn = false;
+
         Log.d("MainButtonService", "onCreate() called");
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
 
-        Log.d("MainButtonService", "getSystemService passed");
+
+        // Setting up overlay
+        /*
+        mOverlayView = new View(this);
+        final WindowManager.LayoutParams paramsOverlay = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                PixelFormat.TRANSLUCENT
+        );
+
+        // mOverlayView.setBackgroundColor(0x90000000);
+        windowManager.addView(mOverlayView, paramsOverlay);
+        */
+
+
+
+        final WindowManager.LayoutParams paramsOverlay = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                PixelFormat.TRANSLUCENT
+        );
+
+
+        mOverlayView = new OverlayView(this);
+        windowManager.addView(mOverlayView, paramsOverlay);
+        isOverlayOn = true;
+
+
+        // Setting up navigation button
         mainButton = new ImageView(this);
         mainButton.setImageResource(R.drawable.ic_sentiment_satisfied_black_36dp);
         mainButton.setBackgroundColor(Color.GRAY);
@@ -77,6 +109,17 @@ public class MainButtonService extends Service{
                     Toast.makeText(v.getContext(), "Saving Screenshot to TestSS01.PNG",Toast.LENGTH_SHORT).show();
 
                     */
+
+                    if (isOverlayOn) {
+                        windowManager.removeView(mOverlayView);
+                        //windowManager.updateViewLayout(mOverlayView, paramsOverlay);
+                        isOverlayOn = false;
+                    } else {
+                        mOverlayView = new OverlayView(getApplicationContext());
+                        windowManager.addView(mOverlayView, paramsOverlay);
+                        //windowManager.updateViewLayout(mOverlayView, paramsOverlay);
+                        isOverlayOn = true;
+                    }
                     return true;
                 } else {
                     // your code for move and drag
@@ -102,11 +145,13 @@ public class MainButtonService extends Service{
             }
 
         });
+    }
 
+
+    private void drawGreenBox() {
 
 
     }
-
     /*
 
     public static Bitmap getScreenShot(View view) {
@@ -163,6 +208,12 @@ public class MainButtonService extends Service{
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (mainButton != null) windowManager.removeView(mainButton);
+        if (mainButton != null)  {
+            windowManager.removeView(mainButton);
+        }
+
+        if (isOverlayOn) {
+            windowManager.removeView(mOverlayView);
+        }
     }
 }

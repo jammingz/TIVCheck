@@ -42,9 +42,9 @@ public class MainActivity extends ScreenshotDetectionActivity {
             /** request permission via start activity for result */
 
 
-//            startActivityForResult(intent, REQUEST_CODE);
+            startActivityForResult(intent, REQUEST_CODE);
         } else {
-//            startService(new Intent(getApplicationContext(), MainButtonService.class));
+            startService(new Intent(getApplicationContext(), MainButtonService.class));
         }
     }
 
@@ -84,6 +84,14 @@ public class MainActivity extends ScreenshotDetectionActivity {
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Toast.makeText(this, "Stopping service", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, MainButtonService.class);
+        stopService(intent);
+    }
+
+    @Override
     public void onScreenCaptured(String path) {
         Log.d("onScreenCaptured: ", path);
         Toast.makeText(this, path, Toast.LENGTH_SHORT).show();
@@ -95,6 +103,7 @@ public class MainActivity extends ScreenshotDetectionActivity {
         String path2 = "/storage/emulated/0/Pictures/Screenshots/Screenshot_20180504-145015.png";
         ScreenshotEditor editor = new ScreenshotEditor(path2, displayMetrics);
         editor.testFindPixel();
+        editor.testFindPixelDiff();
         //editor.extractColor();
 
     }
