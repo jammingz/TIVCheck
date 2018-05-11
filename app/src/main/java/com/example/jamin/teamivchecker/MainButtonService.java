@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.IBinder;
@@ -148,10 +149,7 @@ public class MainButtonService extends Service{
     }
 
 
-    private void drawGreenBox() {
 
-
-    }
     /*
 
     public static Bitmap getScreenShot(View view) {

@@ -104,6 +104,7 @@ public class MainActivity extends ScreenshotDetectionActivity {
         ScreenshotEditor editor = new ScreenshotEditor(path2, displayMetrics);
         editor.testFindPixel();
         editor.testFindPixelDiff();
+        editor.testFindHPPixel();
         //editor.extractColor();
 
     }

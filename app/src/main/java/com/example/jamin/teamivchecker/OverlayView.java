@@ -21,6 +21,8 @@ public class OverlayView extends View {
 
         // Width: 330, Height: 391, (29, 29, 300, 361 )
         //    TopLeft: (371,721)
+        // BottomRight: (359,721)
+        //  TopLeft: (371,721)
 
         rectHeight = 391;
         rectWidth = 330;

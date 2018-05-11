@@ -53,11 +53,37 @@ public class ScreenshotEditor {
     }
 
     public boolean isEqual(RGBColor a, RGBColor b) {
-        if (a.getBlue() == b.getBlue() && a.getGreen() == b.getGreen() && a.getRed() == b.getRed()) {
+        if (Math.abs(a.getBlue() - b.getBlue()) < 5 && Math.abs(a.getGreen() - b.getGreen()) < 5 && Math.abs(a.getRed() - b.getRed()) < 5) { // if the RGB values are closely similar
             return true;
         }
         return false;
     }
+
+    public void testFindHPPixel() {
+        int x = 540;
+        int y = 960;
+        RGBColor target = new RGBColor(109,237,183);
+        int length = 0;
+
+        for (int i = y; i < height; i++) {
+            RGBColor color = getRGB(x,i);
+            if (!isEqual(target, color)) {
+                length++;
+            } else {
+                break;
+            }
+        }
+
+
+        Log.d("testFindHPPixel", "Length from center:" + String.valueOf(length));
+
+
+        IntegerPoint healthBarPoint = new IntegerPoint(540, 960 + length);
+        getPositionCoordinates(healthBarPoint);
+
+
+    }
+
 
     public void testFindPixel() {
         int x = 400;
@@ -221,6 +247,54 @@ public class ScreenshotEditor {
         }
     }
 
+
+    private IntegerPoint[][] getPositionCoordinates(IntegerPoint pointOfReference) {
+        // BottomRight: (359,721)
+        //  TopLeft: (371,721)
+        // scrollview top border starts at y=270
+        IntegerPoint[][] results = new IntegerPoint[3][3]; // Initialize as empty array of 9 empty points.
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                results[i][j] = new IntegerPoint();
+            }
+        }
+
+
+        int refX = pointOfReference.getX();
+        int refY = pointOfReference.getY();
+
+        // Determine pointOfReference's position in the array
+        int arrayXPos = refX / 342; // width of frame(330) + 12 pixel gap. Means it's arrayXPosition from the left of the screen
+        int arrayYPos = (refY - 270 - 358) / 391; // arrayYPositions from the top of the scrollView. 270 is the length of margin above the scrollView. 358 is the length of the top of rectangle to the health bar
+
+
+        // Get the first(top left corner) position's coordinates
+        int x = refX - 165 - 342 * arrayXPos; // 165 is the length between current X position and the left border
+        int y = refY - 358 - 391 * arrayYPos; // 358 is the length between HP bar and the top border
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                results[i][j] = new IntegerPoint(x + 342 * i, y + 391 * j);
+            }
+        }
+
+
+        String debugString = "[";
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                IntegerPoint pointOfInterest = results[i][j];
+                debugString += "(" + String.valueOf(pointOfInterest.getX()) + "," + String.valueOf(pointOfInterest.getY()) + "), ";
+            }
+        }
+
+        debugString += "]";
+
+        Log.d("getPositionCoords()", debugString);
+
+        return results;
+
+    }
 
 
 
