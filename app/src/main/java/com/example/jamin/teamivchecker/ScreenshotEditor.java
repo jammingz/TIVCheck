@@ -3,8 +3,10 @@ package com.example.jamin.teamivchecker;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,7 +16,7 @@ public class ScreenshotEditor {
     int height;
     int width;
 
-    public ScreenshotEditor(String path, DisplayMetrics metrics) {
+    public ScreenshotEditor(String path, Display display) {
         File imageFile = new File(path);
         mBitmap = null; // Default is null
         if (imageFile.exists()) {
@@ -22,9 +24,99 @@ public class ScreenshotEditor {
             mBitmap = BitmapFactory.decodeFile(path);
         }
 
-        height = metrics.heightPixels;
-        width = metrics.widthPixels;
+        Point size = new Point();
+        display.getSize(size);
+        width = size.x;
+        height = size.y;
     }
+
+
+    public boolean isEqual(RGBColor a, RGBColor b) {
+        if (Math.abs(a.getBlue() - b.getBlue()) < 5 && Math.abs(a.getGreen() - b.getGreen()) < 5 && Math.abs(a.getRed() - b.getRed()) < 5) { // if the RGB values are closely similar
+            return true;
+        }
+        return false;
+    }
+
+    public IntegerPoint[][] constructGrid() {
+        int x = 540;
+        int y = 960;
+        RGBColor target = new RGBColor(109,237,183);
+        int length = 0;
+
+        for (int i = y; i < height; i++) {
+            RGBColor color = getRGB(x,i);
+            if (!isEqual(target, color)) {
+                length++;
+            } else {
+                break;
+            }
+        }
+
+
+        Log.d("constructGrid()", "Length from center:" + String.valueOf(length));
+
+
+        IntegerPoint healthBarPoint = new IntegerPoint(540, 960 + length);
+        return getPositionCoordinates(healthBarPoint);
+    }
+
+
+
+    private IntegerPoint[][] getPositionCoordinates(IntegerPoint pointOfReference) {
+        // BottomRight: (359,721)
+        //  TopLeft: (371,721)
+        // scrollview top border starts at y=270
+        IntegerPoint[][] results = new IntegerPoint[3][3]; // Initialize as empty array of 9 empty points.
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                results[i][j] = new IntegerPoint();
+            }
+        }
+
+
+        int refX = pointOfReference.getX();
+        int refY = pointOfReference.getY();
+
+        // Determine pointOfReference's position in the array
+        int arrayXPos = refX / 342; // width of frame(330) + 12 pixel gap. Means it's arrayXPosition from the left of the screen
+        int arrayYPos = (refY - 270 - 358) / 391; // arrayYPositions from the top of the scrollView. 270 is the length of margin above the scrollView. 358 is the length of the top of rectangle to the health bar
+
+
+        // Get the first(top left corner) position's coordinates
+        int x = refX - 165 - 342 * arrayXPos; // 165 is the length between current X position and the left border
+        int y = refY - 358 - 391 * arrayYPos; // 358 is the length between HP bar and the top border
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                results[i][j] = new IntegerPoint(x + 342 * i, y + 391 * j);
+            }
+        }
+
+
+        String debugString = "[";
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                IntegerPoint pointOfInterest = results[i][j];
+                debugString += "(" + String.valueOf(pointOfInterest.getX()) + "," + String.valueOf(pointOfInterest.getY()) + "), ";
+            }
+        }
+
+        debugString += "]";
+
+        Log.d("getPositionCoords()", debugString);
+
+        return results;
+
+    }
+
+
+
+
+    /*
+     *  Unused Methods that may be important
+     */
 
     public RGBColor getRGB(int x, int y) {
         if (mBitmap != null) {
@@ -52,37 +144,46 @@ public class ScreenshotEditor {
         return rgb;
     }
 
-    public boolean isEqual(RGBColor a, RGBColor b) {
-        if (Math.abs(a.getBlue() - b.getBlue()) < 5 && Math.abs(a.getGreen() - b.getGreen()) < 5 && Math.abs(a.getRed() - b.getRed()) < 5) { // if the RGB values are closely similar
-            return true;
-        }
-        return false;
-    }
+    /*
+     *  Helper Classes
+     */
 
-    public void testFindHPPixel() {
-        int x = 540;
-        int y = 960;
-        RGBColor target = new RGBColor(109,237,183);
-        int length = 0;
 
-        for (int i = y; i < height; i++) {
-            RGBColor color = getRGB(x,i);
-            if (!isEqual(target, color)) {
-                length++;
-            } else {
-                break;
-            }
+    private class RGBColor {
+        int red;
+        int green;
+        int blue;
+
+        // Default constructor.
+        public RGBColor() {
+            red = -1;
+            green = -1;
+            blue = -1;
         }
 
+        public RGBColor(int r, int g, int b) {
+            red = r;
+            green = g;
+            blue = b;
+        }
 
-        Log.d("testFindHPPixel", "Length from center:" + String.valueOf(length));
+        public int getBlue() {
+            return blue;
+        }
 
+        public int getGreen() {
+            return green;
+        }
 
-        IntegerPoint healthBarPoint = new IntegerPoint(540, 960 + length);
-        getPositionCoordinates(healthBarPoint);
-
-
+        public int getRed() {
+            return red;
+        }
     }
+
+
+    /*
+     * Debugger Methods
+     */
 
 
     public void testFindPixel() {
@@ -215,87 +316,6 @@ public class ScreenshotEditor {
         Log.d("Determining Dimensions", "BottomRight: (" + String.valueOf(x + lengthRight) + "," + String.valueOf(y + lengthDown) + ")");
 
     }
-
-    private class RGBColor {
-        int red;
-        int green;
-        int blue;
-
-        // Default constructor.
-        public RGBColor() {
-            red = -1;
-            green = -1;
-            blue = -1;
-        }
-
-        public RGBColor(int r, int g, int b) {
-            red = r;
-            green = g;
-            blue = b;
-        }
-
-        public int getBlue() {
-            return blue;
-        }
-
-        public int getGreen() {
-            return green;
-        }
-
-        public int getRed() {
-            return red;
-        }
-    }
-
-
-    private IntegerPoint[][] getPositionCoordinates(IntegerPoint pointOfReference) {
-        // BottomRight: (359,721)
-        //  TopLeft: (371,721)
-        // scrollview top border starts at y=270
-        IntegerPoint[][] results = new IntegerPoint[3][3]; // Initialize as empty array of 9 empty points.
-
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                results[i][j] = new IntegerPoint();
-            }
-        }
-
-
-        int refX = pointOfReference.getX();
-        int refY = pointOfReference.getY();
-
-        // Determine pointOfReference's position in the array
-        int arrayXPos = refX / 342; // width of frame(330) + 12 pixel gap. Means it's arrayXPosition from the left of the screen
-        int arrayYPos = (refY - 270 - 358) / 391; // arrayYPositions from the top of the scrollView. 270 is the length of margin above the scrollView. 358 is the length of the top of rectangle to the health bar
-
-
-        // Get the first(top left corner) position's coordinates
-        int x = refX - 165 - 342 * arrayXPos; // 165 is the length between current X position and the left border
-        int y = refY - 358 - 391 * arrayYPos; // 358 is the length between HP bar and the top border
-
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                results[i][j] = new IntegerPoint(x + 342 * i, y + 391 * j);
-            }
-        }
-
-
-        String debugString = "[";
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                IntegerPoint pointOfInterest = results[i][j];
-                debugString += "(" + String.valueOf(pointOfInterest.getX()) + "," + String.valueOf(pointOfInterest.getY()) + "), ";
-            }
-        }
-
-        debugString += "]";
-
-        Log.d("getPositionCoords()", debugString);
-
-        return results;
-
-    }
-
 
 
 

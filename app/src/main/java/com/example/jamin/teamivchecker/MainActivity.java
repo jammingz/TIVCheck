@@ -93,6 +93,8 @@ public class MainActivity extends ScreenshotDetectionActivity {
 
     @Override
     public void onScreenCaptured(String path) {
+
+        /*
         Log.d("onScreenCaptured: ", path);
         Toast.makeText(this, path, Toast.LENGTH_SHORT).show();
 
@@ -107,6 +109,7 @@ public class MainActivity extends ScreenshotDetectionActivity {
         editor.testFindHPPixel();
         //editor.extractColor();
 
+*/
     }
 
     @Override

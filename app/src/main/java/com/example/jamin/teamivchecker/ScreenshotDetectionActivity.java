@@ -15,7 +15,7 @@ import android.widget.Toast;
 public abstract class ScreenshotDetectionActivity extends AppCompatActivity implements ScreenshotDetectionDelegate.ScreenshotDetectionListener {
     private static final int REQUEST_CODE_READ_EXTERNAL_STORAGE_PERMISSION = 3009;
 
-    private ScreenshotDetectionDelegate screenshotDetectionDelegate = new ScreenshotDetectionDelegate(this, this);
+    private ScreenshotDetectionDelegate screenshotDetectionDelegate = null;//new ScreenshotDetectionDelegate(this, this);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -26,7 +26,7 @@ public abstract class ScreenshotDetectionActivity extends AppCompatActivity impl
     @Override
     protected void onStart() {
         super.onStart();
-        screenshotDetectionDelegate.startScreenshotDetection();
+       // screenshotDetectionDelegate.startScreenshotDetection();
     }
 
     @Override
@@ -39,7 +39,7 @@ public abstract class ScreenshotDetectionActivity extends AppCompatActivity impl
         super.onPause();
         if (isFinishing()) {
             // Here  you can be sure the Activity will be destroyed eventually
-            screenshotDetectionDelegate.stopScreenshotDetection();
+        //    screenshotDetectionDelegate.stopScreenshotDetection();
         }
     }
 

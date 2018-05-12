@@ -2,6 +2,8 @@ package com.example.jamin.teamivchecker;
 
 import android.app.Service;
 import android.content.ActivityNotFoundException;
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -11,6 +13,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.Display;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -22,7 +25,7 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileOutputStream;
 
-public class MainButtonService extends Service{
+public class MainButtonService extends Service implements ScreenshotDetectionDelegate.ScreenshotDetectionListener{
     private WindowManager windowManager;
     private View mOverlayView;
     private ImageView mainButton;
@@ -33,11 +36,15 @@ public class MainButtonService extends Service{
     private float initialTouchY;
     private boolean isOverlayOn;
     final static String dirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Screenshots";
+    private static final int REQUEST_CODE_READ_EXTERNAL_STORAGE_PERMISSION = 3009;
+
+    private ScreenshotDetectionDelegate screenshotDetectionDelegate = new ScreenshotDetectionDelegate(this, this);
 
     @Override public IBinder onBind(Intent intent) {
         // Not used
         return null;
     }
+
 
     @Override public void onCreate() {
         super.onCreate();
@@ -63,16 +70,12 @@ public class MainButtonService extends Service{
 
 
 
-        final WindowManager.LayoutParams paramsOverlay = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                PixelFormat.TRANSLUCENT
-        );
 
-
+        /*
         mOverlayView = new OverlayView(this);
         windowManager.addView(mOverlayView, paramsOverlay);
-        isOverlayOn = true;
+        */
+        isOverlayOn = false;
 
 
         // Setting up navigation button
@@ -116,10 +119,12 @@ public class MainButtonService extends Service{
                         //windowManager.updateViewLayout(mOverlayView, paramsOverlay);
                         isOverlayOn = false;
                     } else {
+                        /*
                         mOverlayView = new OverlayView(getApplicationContext());
                         windowManager.addView(mOverlayView, paramsOverlay);
                         //windowManager.updateViewLayout(mOverlayView, paramsOverlay);
                         isOverlayOn = true;
+                        */
                     }
                     return true;
                 } else {
@@ -146,54 +151,44 @@ public class MainButtonService extends Service{
             }
 
         });
+
+
+        screenshotDetectionDelegate.startScreenshotDetection();
+    }
+
+    @Override
+    public void onScreenCaptured(String path) {
+        WindowManager window = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+        Display display = window.getDefaultDisplay();
+        Log.d("onScreenCaptured: ", path);
+        ScreenshotEditor editor = new ScreenshotEditor(path, display);
+        IntegerPoint[][] gridReferencePoints = editor.constructGrid();
+
+
+        final WindowManager.LayoutParams paramsOverlay = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                PixelFormat.TRANSLUCENT
+        );
+
+        mOverlayView = new OverlayView(this, gridReferencePoints);
+        windowManager.addView(mOverlayView, paramsOverlay);
+        isOverlayOn = true;
+
+
+    }
+
+    @Override
+    public void onScreenCapturedWithDeniedPermission() {
+
+    }
+
+    @Override
+    public ContentResolver getContentResolver() {
+        return super.getContentResolver();
     }
 
 
-
-    /*
-
-    public static Bitmap getScreenShot(View view) {
-        Log.d("MainButtonService", "getScreenshot() called");
-        View screenView = view.getRootView();
-        screenView.setDrawingCacheEnabled(true);
-        Bitmap bitmap = Bitmap.createBitmap(screenView.getDrawingCache());
-        screenView.setDrawingCacheEnabled(false);
-        Log.d("MainButtonService", "getScreenshot() finished");
-        return bitmap;
-    }
-
-    private static void store(Bitmap bm, String fileName){
-        File dir = new File(dirPath);
-        if(!dir.exists())
-            dir.mkdirs();
-        File file = new File(dirPath, fileName);
-        try {
-            FileOutputStream fOut = new FileOutputStream(file);
-            bm.compress(Bitmap.CompressFormat.PNG, 85, fOut);
-            fOut.flush();
-            fOut.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void shareImage(File file){
-        Uri uri = Uri.fromFile(file);
-        Intent intent = new Intent();
-        intent.setAction(Intent.ACTION_SEND);
-        intent.setType("image/*");
-
-        intent.putExtra(android.content.Intent.EXTRA_SUBJECT, "");
-        intent.putExtra(android.content.Intent.EXTRA_TEXT, "");
-        intent.putExtra(Intent.EXTRA_STREAM, uri);
-        try {
-            startActivity(Intent.createChooser(intent, "Share Screenshot"));
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(getApplicationContext(), "No App Available", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-*/
     // https://stackoverflow.com/questions/19538747/how-to-use-both-ontouch-and-onclick-for-an-imagebutton
     private class SingleTapConfirm extends GestureDetector.SimpleOnGestureListener {
 
@@ -213,5 +208,8 @@ public class MainButtonService extends Service{
         if (isOverlayOn) {
             windowManager.removeView(mOverlayView);
         }
+
+        screenshotDetectionDelegate.stopScreenshotDetection();
     }
+
 }

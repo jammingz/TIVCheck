@@ -2,6 +2,7 @@ package com.example.jamin.teamivchecker;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Service;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
@@ -14,10 +15,10 @@ import android.support.v4.content.ContextCompat;
 import java.lang.ref.WeakReference;
 
 public class ScreenshotDetectionDelegate {
-    private WeakReference<Activity> activityWeakReference;
+    private WeakReference<Service> activityWeakReference;
     private ScreenshotDetectionListener listener;
 
-    public ScreenshotDetectionDelegate(Activity activityWeakReference, ScreenshotDetectionListener listener) {
+    public ScreenshotDetectionDelegate(Service activityWeakReference, ScreenshotDetectionListener listener) {
         this.activityWeakReference = new WeakReference<>(activityWeakReference);
         this.listener = listener;
     }
