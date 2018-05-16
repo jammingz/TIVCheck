@@ -4,9 +4,13 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
+
+import com.googlecode.tesseract.android.TessBaseAPI;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -112,6 +116,30 @@ public class ScreenshotEditor {
     }
 
 
+
+    public Bitmap cropImage(IntegerPoint[][] positions, int indexX, int indexY) {
+        if (mBitmap != null) {
+            IntegerPoint origin = positions[indexX][indexY];
+            int originX = origin.getX();
+            int originY = origin.getY();
+            Bitmap croppedBmp = Bitmap.createBitmap(mBitmap, originX+50, originY+63 , 200 , 50);
+            return croppedBmp;
+        }
+
+        return null;
+    }
+
+    public Bitmap cropName(IntegerPoint[][] positions, int indexX, int indexY) {
+        if (mBitmap != null) {
+            IntegerPoint origin = positions[indexX][indexY];
+            int originX = origin.getX();
+            int originY = origin.getY();
+            Bitmap croppedBmp = Bitmap.createBitmap(mBitmap, originX+44, originY+298 , 245 , 38);
+            return croppedBmp;
+        }
+
+        return null;
+    }
 
 
     /*

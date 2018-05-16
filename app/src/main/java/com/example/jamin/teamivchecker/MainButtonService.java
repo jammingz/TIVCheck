@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
@@ -12,6 +13,7 @@ import android.graphics.Point;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Display;
 import android.view.GestureDetector;
@@ -22,8 +24,13 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.googlecode.tesseract.android.TessBaseAPI;
+
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class MainButtonService extends Service implements ScreenshotDetectionDelegate.ScreenshotDetectionListener{
     private WindowManager windowManager;
@@ -37,6 +44,13 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
     private boolean isOverlayOn;
     final static String dirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Screenshots";
     private static final int REQUEST_CODE_READ_EXTERNAL_STORAGE_PERMISSION = 3009;
+
+    // Variables for Tesseract-OCR
+
+    private TessBaseAPI tessBaseApi;
+    public static final String lang = "eng";
+    public static final String DATA_PATH = Environment.getExternalStorageDirectory().toString() + "/TeamIVChecker/";
+
 
     private ScreenshotDetectionDelegate screenshotDetectionDelegate = new ScreenshotDetectionDelegate(this, this);
 
@@ -53,6 +67,63 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
 
         Log.d("MainButtonService", "onCreate() called");
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+
+
+
+        // Check to see if SD card has trained data. If not, it will export trained data into SD card.
+        String[] paths = new String[] { DATA_PATH, DATA_PATH + "tessdata/" };
+
+        for (String path : paths) {
+            File dir = new File(path);
+            if (!dir.exists()) {
+                if (!dir.mkdirs()) {
+                    Log.v("Main", "ERROR: Creation of directory " + path + " on sdcard failed");
+                    break;
+                } else {
+                    Log.v("Main", "Created directory " + path + " on sdcard");
+                }
+            }
+
+        }
+        if (!(new File(DATA_PATH + "tessdata/" + lang + ".traineddata")).exists()) {
+            try {
+
+                AssetManager assetManager = getAssets();
+
+                InputStream in = assetManager.open(lang + ".traineddata");
+                //GZIPInputStream gin = new GZIPInputStream(in);
+                OutputStream out = new FileOutputStream(DATA_PATH
+                        + "tessdata/" + lang + ".traineddata");
+
+                // Transfer bytes from in to out
+                byte[] buf = new byte[1024];
+                int len;
+                //while ((lenf = gin.read(buff)) > 0) {
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+                in.close();
+                //gin.close();
+                out.close();
+
+                Log.d("MainButtonService", "Copied " + lang + " traineddata");
+            } catch (IOException e) {
+                 Log.d("MainButtonService", "Was unable to copy " + lang + " traineddata " + e.toString());
+            }
+
+        }
+
+        // Load train data from SD card
+
+
+        tessBaseApi = new TessBaseAPI(); // AssetManager assetManager=
+        String datapath = Environment.getExternalStorageDirectory() + "/TeamIVChecker/";
+        String language = "eng";
+        // AssetManager assetManager = getAssets();
+        File dir = new File(datapath + "/tessdata/");
+        if (!dir.exists())
+            dir.mkdirs();
+        tessBaseApi.init(datapath, language);
 
 
         // Setting up overlay
@@ -175,6 +246,32 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
         windowManager.addView(mOverlayView, paramsOverlay);
         isOverlayOn = true;
 
+
+        Bitmap cropped = editor.cropImage(gridReferencePoints, 1, 1);
+        Bitmap name = editor.cropName(gridReferencePoints, 1, 1);
+        // MediaStore.Images.Media.insertImage(getContentResolver(), cropped, "LMAO" , "test");
+
+
+        if (tessBaseApi != null && cropped != null && name != null) {
+            tessBaseApi.setImage(cropped);
+            String results = tessBaseApi.getUTF8Text();
+
+            if (results.length() > 2) {
+                Log.d("TESSERACT-OCR", "CP: " + results.substring(2));
+            } else {
+                Log.d("TESSERACT-OCR", "Invalid CP!");
+
+            }
+
+
+            tessBaseApi.setImage(name);
+            results = tessBaseApi.getUTF8Text();
+
+
+            Log.d("TESSERACT-OCR", "Name: " + results);
+            //  return Integer.valueOf(results); // need to cut off CP prefix first
+
+        }
 
     }
 
