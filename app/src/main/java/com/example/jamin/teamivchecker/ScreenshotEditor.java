@@ -134,7 +134,7 @@ public class ScreenshotEditor {
             IntegerPoint origin = positions[indexX][indexY];
             int originX = origin.getX();
             int originY = origin.getY();
-            Bitmap croppedBmp = Bitmap.createBitmap(mBitmap, originX+44, originY+298 , 245 , 38);
+            Bitmap croppedBmp = Bitmap.createBitmap(mBitmap, originX+44, originY+300 , 245 , 42);
             return croppedBmp;
         }
 

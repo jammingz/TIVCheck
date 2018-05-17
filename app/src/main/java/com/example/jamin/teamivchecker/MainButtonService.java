@@ -114,8 +114,6 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
         }
 
         // Load train data from SD card
-
-
         tessBaseApi = new TessBaseAPI(); // AssetManager assetManager=
         String datapath = Environment.getExternalStorageDirectory() + "/TeamIVChecker/";
         String language = "eng";
@@ -246,32 +244,36 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
         windowManager.addView(mOverlayView, paramsOverlay);
         isOverlayOn = true;
 
+        // Getting the info of all 9 pokemons in the grid
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                Bitmap croppedImg = editor.cropImage(gridReferencePoints, i, j);
+                Bitmap nameImg = editor.cropName(gridReferencePoints, i, j);
+                String cp = "Undefined"; // initialize variables
+                String name = "Undefined"; // initialize variables
+                String results = "";
 
-        Bitmap cropped = editor.cropImage(gridReferencePoints, 1, 1);
-        Bitmap name = editor.cropName(gridReferencePoints, 1, 1);
-        // MediaStore.Images.Media.insertImage(getContentResolver(), cropped, "LMAO" , "test");
+                if (tessBaseApi != null && croppedImg != null && nameImg != null) {
+                    tessBaseApi.setImage(croppedImg);
+                    results = tessBaseApi.getUTF8Text();
 
+                    if (results.length() > 2) {
+                        cp = results.substring(2);
+                    } else {
+                        Log.d("TESSERACT-OCR", "Invalid CP!");
+                        continue;
+                    }
 
-        if (tessBaseApi != null && cropped != null && name != null) {
-            tessBaseApi.setImage(cropped);
-            String results = tessBaseApi.getUTF8Text();
+                    tessBaseApi.setImage(nameImg);
+                    name = tessBaseApi.getUTF8Text();
 
-            if (results.length() > 2) {
-                Log.d("TESSERACT-OCR", "CP: " + results.substring(2));
-            } else {
-                Log.d("TESSERACT-OCR", "Invalid CP!");
-
+                    Log.d("TESSERACT-OCR", "Name: " + name + ", CP: " + cp);
+                    //  return Integer.valueOf(results); // need to cut off CP prefix first
+                }
             }
-
-
-            tessBaseApi.setImage(name);
-            results = tessBaseApi.getUTF8Text();
-
-
-            Log.d("TESSERACT-OCR", "Name: " + results);
-            //  return Integer.valueOf(results); // need to cut off CP prefix first
-
         }
+
+
 
     }
 
