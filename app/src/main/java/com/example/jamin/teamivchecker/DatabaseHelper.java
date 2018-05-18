@@ -32,23 +32,25 @@ public class DatabaseHelper {
     private SQLiteDatabase cpmReadDB;
 
     private boolean isConnected;
+    private Context mContext;
 
     // Private constructor
-    protected DatabaseHelper() {
+    protected DatabaseHelper(Context context) {
         isConnected = false;
+        mContext = context;
     }
 
 
-    public void connect(Context context) {
-        SQLiteOpenHelper helper1 = new PokemonDBHelper(context);
+    public void connect() {
+        SQLiteOpenHelper helper1 = new PokemonDBHelper(mContext);
         pokemonReadDB = helper1.getReadableDatabase();
         pokemonWriteDB = helper1.getWritableDatabase();
 
-        SQLiteOpenHelper helper2 = new NiaPokemonDBHelper(context);
+        SQLiteOpenHelper helper2 = new NiaPokemonDBHelper(mContext);
         niaPokemonReadDB = helper2.getReadableDatabase();
         niaPokemonWriteDB = helper2.getWritableDatabase();
 
-        SQLiteOpenHelper helper3 = new CPMultiplierDBHelper(context);
+        SQLiteOpenHelper helper3 = new CPMultiplierDBHelper(mContext);
         cpmWriteDB = helper3.getWritableDatabase();
         cpmReadDB = helper3.getReadableDatabase();
 
@@ -311,6 +313,23 @@ public class DatabaseHelper {
         db.insert(NiaPokemonStatContract.NiaPokemonStatEntry.TABLE_NAME, null, values);
 
         Log.d(TAG, "Inserting Nia entry: " + name);
+    }
+
+    public void insertNiaPkmn(PGoPokemon pkmn) {
+        CalculateCP calculator = new CalculateCP(mContext);
+        int maxCP = calculator.calculate(pkmn, 40.0);
+
+        insertNiaStats(
+                pkmn.getName(),
+                pkmn.getType1(),
+                pkmn.getType2(),
+                maxCP,
+                pkmn.getSta(),
+                pkmn.getAtk(),
+                pkmn.getDef(),
+                pkmn.getGen(),
+                pkmn.isLegendary()
+        );
     }
 
 

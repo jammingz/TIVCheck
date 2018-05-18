@@ -1,10 +1,12 @@
 package com.example.jamin.teamivchecker;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -51,6 +53,24 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
     public static final String lang = "eng";
     public static final String DATA_PATH = Environment.getExternalStorageDirectory().toString() + "/TeamIVChecker/";
 
+    private static final int NOTIFICATION_ID = 1;
+    private static final String SHARED_PREFERENCE_KEY = "com.example.jamin.teamivchecker.PREFERENCE_FILE_KEY";
+
+
+
+    // Creating background thread to import CSV data
+    private Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            while(true) {
+                ImportFromCSV csv = new ImportFromCSV(getApplicationContext());
+                csv.importFromCSV();
+                csv.importCPMFromCSV();
+                csv.exportToNiaDatabase();
+                csv.close();
+            }
+        }
+    };
 
     private ScreenshotDetectionDelegate screenshotDetectionDelegate = new ScreenshotDetectionDelegate(this, this);
 
@@ -122,28 +142,6 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
         if (!dir.exists())
             dir.mkdirs();
         tessBaseApi.init(datapath, language);
-
-
-        // Setting up overlay
-        /*
-        mOverlayView = new View(this);
-        final WindowManager.LayoutParams paramsOverlay = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                PixelFormat.TRANSLUCENT
-        );
-
-        // mOverlayView.setBackgroundColor(0x90000000);
-        windowManager.addView(mOverlayView, paramsOverlay);
-        */
-
-
-
-
-        /*
-        mOverlayView = new OverlayView(this);
-        windowManager.addView(mOverlayView, paramsOverlay);
-        */
         isOverlayOn = false;
 
 
@@ -223,6 +221,29 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
 
 
         screenshotDetectionDelegate.startScreenshotDetection();
+
+
+        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences(SHARED_PREFERENCE_KEY, Context.MODE_PRIVATE);
+        boolean isLoaded = sharedPref.getBoolean("loaded", false); // Check if database is already imported
+
+        if (!isLoaded) { // Import from CSV if our database is empty
+            // Testing attempt to create new background thread
+            new Thread(runnable).start();
+
+            // prepare a notification for user and start service foreground
+            Notification notification = new Notification.Builder(getApplicationContext())
+                    .setContentTitle(getString(R.string.app_name))
+                    .setContentText("Filling Database")
+                    .setSmallIcon(R.drawable.ic_sentiment_satisfied_black_24dp)
+                    .build();
+
+            // this will ensure your service won't be killed by Android
+            startForeground(NOTIFICATION_ID, notification);
+
+            SharedPreferences.Editor edit = sharedPref.edit();
+            edit.putBoolean("loaded", true); // Set flag to true.
+            edit.apply();
+        }
     }
 
     @Override
