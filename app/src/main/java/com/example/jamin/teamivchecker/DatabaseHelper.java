@@ -34,6 +34,8 @@ public class DatabaseHelper {
     private boolean isConnected;
     private Context mContext;
 
+    private static final int DATABASE_VERSION = 1;
+
     // Private constructor
     protected DatabaseHelper(Context context) {
         isConnected = false;
@@ -42,19 +44,29 @@ public class DatabaseHelper {
 
 
     public void connect() {
-        SQLiteOpenHelper helper1 = new PokemonDBHelper(mContext);
+        PokemonDBHelper helper1 = new PokemonDBHelper(mContext);
         pokemonReadDB = helper1.getReadableDatabase();
         pokemonWriteDB = helper1.getWritableDatabase();
 
-        SQLiteOpenHelper helper2 = new NiaPokemonDBHelper(mContext);
+        NiaPokemonDBHelper helper2 = new NiaPokemonDBHelper(mContext);
         niaPokemonReadDB = helper2.getReadableDatabase();
         niaPokemonWriteDB = helper2.getWritableDatabase();
 
-        SQLiteOpenHelper helper3 = new CPMultiplierDBHelper(mContext);
+        helper2.forceCreateTable(niaPokemonWriteDB);
+
+        CPMultiplierDBHelper helper3 = new CPMultiplierDBHelper(mContext);
         cpmWriteDB = helper3.getWritableDatabase();
         cpmReadDB = helper3.getReadableDatabase();
 
+        helper3.forceCreateTable(cpmWriteDB);
+
         isConnected = true;
+        Log.d(TAG, "connected!");
+    }
+
+
+    public boolean isConnected() {
+        return isConnected;
     }
 
     public void close() {
@@ -96,7 +108,7 @@ public class DatabaseHelper {
 
         String sortOrder = null;
         String selection = PokemonStatContract.PokemonStatEntry.COLUMN_NAME_PKMN_NAME + " = ?"; // Looking for row with this column name
-        String[] selectionArgs = {pokemonName};
+        String[] selectionArgs = {pokemonName.toLowerCase()};
 
         Cursor cursor = db.query(
                 PokemonStatContract.PokemonStatEntry.TABLE_NAME,      // The table to query
@@ -132,9 +144,10 @@ public class DatabaseHelper {
                     cursor.getInt(cursor.getColumnIndex(PokemonStatContract.PokemonStatEntry.COLUMN_NAME_GENERATION)),
                     isLegend);
 
-            cursor.close();
+
         }
 
+        cursor.close();
         return pkmn;
     }
 
@@ -199,9 +212,9 @@ public class DatabaseHelper {
                     cursor.getInt(cursor.getColumnIndex(PokemonStatContract.PokemonStatEntry.COLUMN_NAME_GENERATION)),
                     isLegend);
 
-            cursor.close();
-        }
 
+        }
+        cursor.close();
         return pkmn;
     }
 
@@ -240,9 +253,10 @@ public class DatabaseHelper {
         if (count > 0 ) {
             cursor.moveToFirst();
             cpm = cursor.getDouble(cursor.getColumnIndex(CPMultiplierContract.CPMEntry.COLUMN_NAME_MULTIPLIER));
-            cursor.close();
+
         }
 
+        cursor.close();
         return cpm;
     }
 
@@ -316,8 +330,13 @@ public class DatabaseHelper {
     }
 
     public void insertNiaPkmn(PGoPokemon pkmn) {
+
+        // Fetching cpm from database based off of pokemon's level
+        final double maxLevel = 40.0;
+        double cpm = selectCpmByLevel(maxLevel);
+
         CalculateCP calculator = new CalculateCP(mContext);
-        int maxCP = calculator.calculate(pkmn, 40.0);
+        int maxCP = calculator.calculate(pkmn, maxLevel, cpm);
 
         insertNiaStats(
                 pkmn.getName(),
@@ -330,6 +349,8 @@ public class DatabaseHelper {
                 pkmn.getGen(),
                 pkmn.isLegendary()
         );
+
+        Log.d(TAG, "Inserting Nia Entry: " + String.valueOf(pkmn.getName()));
     }
 
 
@@ -358,8 +379,8 @@ public class DatabaseHelper {
     private class PokemonDBHelper extends SQLiteOpenHelper {
 
         // If you change the database schema, you must increment the database version.
-        private final String SQL_CREATE_ENTRIES =
-                "CREATE TABLE " + PokemonStatContract.PokemonStatEntry.TABLE_NAME + " (" +
+        private String SQL_CREATE_ENTRIES =
+                "CREATE TABLE IF NOT EXISTS " + PokemonStatContract.PokemonStatEntry.TABLE_NAME + " (" +
                         PokemonStatContract.PokemonStatEntry._ID + " INTEGER PRIMARY KEY," +
                         PokemonStatContract.PokemonStatEntry.COLUMN_NAME_PKMN_NAME + TEXT_TYPE + COMMA_SEP +
                         PokemonStatContract.PokemonStatEntry.COLUMN_NAME_TYPE1 + INTEGER_TYPE + COMMA_SEP +
@@ -378,7 +399,6 @@ public class DatabaseHelper {
         private final String SQL_DELETE_ENTRIES =
                 "DROP TABLE IF EXISTS " + PokemonStatContract.PokemonStatEntry.TABLE_NAME;
 
-        private static final int DATABASE_VERSION = 1;
         private static final String DATABASE_NAME = "TeamIVChecker.db";
 
 
@@ -404,8 +424,8 @@ public class DatabaseHelper {
     private class NiaPokemonDBHelper extends SQLiteOpenHelper {
 
         // If you change the database schema, you must increment the database version.
-        private final String SQL_CREATE_ENTRIES =
-                "CREATE TABLE " + NiaPokemonStatContract.NiaPokemonStatEntry.TABLE_NAME + " (" +
+        private String SQL_CREATE_ENTRIES =
+                "CREATE TABLE IF NOT EXISTS  " + NiaPokemonStatContract.NiaPokemonStatEntry.TABLE_NAME + " (" +
                         NiaPokemonStatContract.NiaPokemonStatEntry._ID + " INTEGER PRIMARY KEY," +
                         NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_PKMN_NAME + TEXT_TYPE + COMMA_SEP +
                         NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_TYPE1 + INTEGER_TYPE + COMMA_SEP +
@@ -421,13 +441,13 @@ public class DatabaseHelper {
         private final String SQL_DELETE_ENTRIES =
                 "DROP TABLE IF EXISTS " + NiaPokemonStatContract.NiaPokemonStatEntry.TABLE_NAME;
 
-        private static final int DATABASE_VERSION = 1;
         private static final String DATABASE_NAME = "TeamIVChecker.db";
 
 
         private NiaPokemonDBHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
         }
+
 
 
         @Override
@@ -442,11 +462,15 @@ public class DatabaseHelper {
             sqLiteDatabase.execSQL(SQL_DELETE_ENTRIES);
             onCreate(sqLiteDatabase);
         }
+
+        public void forceCreateTable(SQLiteDatabase db) {
+            db.execSQL(SQL_CREATE_ENTRIES);
+        }
     }
 
     private class CPMultiplierDBHelper extends SQLiteOpenHelper {
-        private final String SQL_CREATE_ENTRIES =
-                "CREATE TABLE " + CPMultiplierContract.CPMEntry.TABLE_NAME + " (" +
+        private String SQL_CREATE_ENTRIES =
+                "CREATE TABLE IF NOT EXISTS " + CPMultiplierContract.CPMEntry.TABLE_NAME + " (" +
                         CPMultiplierContract.CPMEntry._ID + " INTEGER PRIMARY KEY," +
                         CPMultiplierContract.CPMEntry.COLUMN_NAME_LEVEL + TEXT_TYPE + COMMA_SEP +
                         CPMultiplierContract.CPMEntry.COLUMN_NAME_MULTIPLIER + REAL_TYPE +
@@ -455,7 +479,6 @@ public class DatabaseHelper {
         private final String SQL_DELETE_ENTRIES =
                 "DROP TABLE IF EXISTS " + CPMultiplierContract.CPMEntry.TABLE_NAME;
 
-        private static final int DATABASE_VERSION = 1;
         private static final String DATABASE_NAME = "TeamIVChecker.db";
 
 
@@ -476,7 +499,18 @@ public class DatabaseHelper {
             sqLiteDatabase.execSQL(SQL_DELETE_ENTRIES);
             onCreate(sqLiteDatabase);
         }
+
+        public void forceCreateTable(SQLiteDatabase db) {
+            db.execSQL(SQL_CREATE_ENTRIES);
+        }
     }
 
+
+
+    // Debugger tools
+
+    public void printPokemonObject(Pokemon pkmn) {
+        Log.d(TAG, "Printing Pokemon Object: {" + pkmn.getName() + "(" + Integer.toString(pkmn.getId()) + "): " + " [" + Type.getName(pkmn.getType1()) + "/" + Type.getName(pkmn.getType2()) + "]:  " + String.valueOf(pkmn.getAttack()) + "/" + String.valueOf(pkmn.getSpAttack()) + "}" );
+    }
 
 }

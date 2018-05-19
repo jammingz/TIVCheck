@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class MainButtonService extends Service implements ScreenshotDetectionDelegate.ScreenshotDetectionListener{
+    private static final String TAG = "MainButtonService";
     private WindowManager windowManager;
     private View mOverlayView;
     private ImageView mainButton;
@@ -62,14 +63,12 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            while(true) {
                 ImportFromCSV csv = new ImportFromCSV(getApplicationContext());
                 csv.importFromCSV();
                 csv.importCPMFromCSV();
                 csv.exportToNiaDatabase();
                 csv.close();
             }
-        }
     };
 
     private ScreenshotDetectionDelegate screenshotDetectionDelegate = new ScreenshotDetectionDelegate(this, this);
@@ -254,7 +253,7 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
         ScreenshotEditor editor = new ScreenshotEditor(path, display);
         IntegerPoint[][] gridReferencePoints = editor.constructGrid();
 
-
+/*
         final WindowManager.LayoutParams paramsOverlay = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -294,8 +293,23 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
             }
         }
 
+*/
 
 
+// Test database
+        CalculateCP calculator = new CalculateCP(this);
+        calculator.connectToDB();
+        int CP = calculator.calculateCPByName("Alakazam", 40.0);
+        calculator.close();
+        Log.d(TAG, "Alakazam CP: " + String.valueOf(CP));
+
+        /*
+        DatabaseHelper dbHelper = new DatabaseHelper(this);
+        dbHelper.connect();
+        Pokemon pkmn = dbHelper.selectPokemonByName("Alakazam");
+        dbHelper.printPokemonObject(pkmn);
+        dbHelper.close();
+        */
     }
 
     @Override

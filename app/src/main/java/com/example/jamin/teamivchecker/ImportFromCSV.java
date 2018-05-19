@@ -13,8 +13,8 @@ public class ImportFromCSV {
     private static final String TAG = "ImportFromCSV";
     private Context mContext;
     private DatabaseHelper mDBHelper;
-    private static final String POKEMON_CSV_DIR = "filename.csv";
-    private static final String CPM_CSV_DIR = "filename.csv";
+    private static final String POKEMON_CSV_DIR = "Pokemon.csv";
+    private static final String CPM_CSV_DIR = "cpm.csv";
 
 
 
@@ -135,9 +135,9 @@ public class ImportFromCSV {
     }
 
     public void exportToNiaDatabase() {
+        CalculateCP calculator = new CalculateCP(mContext);
         for (int i = 1; i < 649; i++) {
             Pokemon pkmn = mDBHelper.selectPokemonById(i);
-            CalculateCP calculator = new CalculateCP(mContext);
             PGoPokemon niaPkmn = calculator.convertToNiaPokemon(pkmn);
             // Insert into database
             mDBHelper.insertNiaPkmn(niaPkmn);
@@ -145,7 +145,6 @@ public class ImportFromCSV {
 
         mDBHelper.close();
     }
-
 
 
     /*

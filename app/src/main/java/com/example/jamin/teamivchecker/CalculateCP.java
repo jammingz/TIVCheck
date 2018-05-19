@@ -11,6 +11,9 @@ public class CalculateCP {
     public CalculateCP(Context context) {
         mContext = context;
         dbHelper = new DatabaseHelper(context);
+    }
+
+    public void connectToDB() {
         dbHelper.connect();
     }
 
@@ -18,7 +21,7 @@ public class CalculateCP {
         dbHelper.close();
     }
 
-    public int calculate(PGoPokemon pkmn, double level) {
+    public int calculate(PGoPokemon pkmn, double level, double cpm) {
         int atkIV = 15; // default IV for perfect pokemon
         int defIV = 15; // default IV for perfect pokemon
         int staIV = 15; // default IV for perfect pokemon
@@ -27,9 +30,6 @@ public class CalculateCP {
         int baseDef = (int) Math.round(pkmn.getDef());
         int baseSta = (int) Math.round(pkmn.getSta());
 
-
-        // Fetching cpm from database based off of pokemon's level
-        double cpm = dbHelper.selectCpmByLevel(level);
 
         /*
         System.out.println("CalculateCP(): " +
@@ -67,18 +67,19 @@ public class CalculateCP {
 
     public int calculateCPByName(String name, double level) {
         Pokemon pkmn = dbHelper.selectPokemonByName(name);
+        double cpm = dbHelper.selectCpmByLevel(level);
         PGoPokemon niaPkmn = convertToNiaPokemon(pkmn);
-        double cp = calculate(niaPkmn, level);
+        double cp = calculate(niaPkmn, level, cpm);
         System.out.println(name + "(" + String.valueOf(level) + "): " + String.valueOf(cp));
         return (int) Math.round(cp);
     }
 
     public int calculateCPById(int id, double level) {
         Pokemon pkmn = dbHelper.selectPokemonById(id);
+        double cpm = dbHelper.selectCpmByLevel(level);
         PGoPokemon niaPkmn = convertToNiaPokemon(pkmn);
-        return calculate(niaPkmn, level);
+        return calculate(niaPkmn, level, cpm);
     }
-
 
     public double getBaseStat(int phystat, int spstat, int speed) {
         double speedMod = 1 + ((double)speed - 75.0)/500.0;
