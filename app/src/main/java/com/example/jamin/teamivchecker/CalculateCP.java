@@ -21,7 +21,8 @@ public class CalculateCP {
         dbHelper.close();
     }
 
-    public int calculate(PGoPokemon pkmn, double level, double cpm) {
+    // Default is perfect IVs
+    public int calculate(PGoPokemon pkmn, double cpm) {
         int atkIV = 15; // default IV for perfect pokemon
         int defIV = 15; // default IV for perfect pokemon
         int staIV = 15; // default IV for perfect pokemon
@@ -42,6 +43,17 @@ public class CalculateCP {
         // Calculate the CP.
         int cp = (int) Math.floor((baseAtk+atkIV) * Math.sqrt(baseDef + defIV) * Math.sqrt(baseSta + staIV) * Math.pow(cpm, 2) / 10.0);
         // System.out.println("CP: " + String.valueOf(cp) + ", ATK: " + String.valueOf(baseAtk) + ", DEF:" + String.valueOf(baseDef) + ", STA: " + String.valueOf(baseSta));
+        return cp; // Default value
+    }
+
+
+    public int calculate(PGoPokemon pkmn, double cpm, int atkIV, int defIV, int staIV) {
+        int baseAtk = (int) Math.round(pkmn.getAtk());
+        int baseDef = (int) Math.round(pkmn.getDef());
+        int baseSta = (int) Math.round(pkmn.getSta());
+
+        // Calculate the CP.
+        int cp = (int) Math.floor((baseAtk+atkIV) * Math.sqrt(baseDef + defIV) * Math.sqrt(baseSta + staIV) * Math.pow(cpm, 2) / 10.0);
         return cp; // Default value
     }
 
@@ -69,7 +81,7 @@ public class CalculateCP {
         Pokemon pkmn = dbHelper.selectPokemonByName(name);
         double cpm = dbHelper.selectCpmByLevel(level);
         PGoPokemon niaPkmn = convertToNiaPokemon(pkmn);
-        double cp = calculate(niaPkmn, level, cpm);
+        double cp = calculate(niaPkmn, cpm);
         System.out.println(name + "(" + String.valueOf(level) + "): " + String.valueOf(cp));
         return (int) Math.round(cp);
     }
@@ -78,7 +90,7 @@ public class CalculateCP {
         Pokemon pkmn = dbHelper.selectPokemonById(id);
         double cpm = dbHelper.selectCpmByLevel(level);
         PGoPokemon niaPkmn = convertToNiaPokemon(pkmn);
-        return calculate(niaPkmn, level, cpm);
+        return calculate(niaPkmn, cpm);
     }
 
     public double getBaseStat(int phystat, int spstat, int speed) {

@@ -298,21 +298,34 @@ public class DatabaseHelper {
     }
 
 
-    public void insertNiaStats(String name, int type1, int type2, int cp, double sta, double atk, double def, int gen, boolean legendary) {
+    // public void insertNiaStats(String name, int type1, int type2, int cp, double sta, double atk, double def, int gen, boolean legendary) {
+    public void insertNiaStats(String name, double level, int CP, int atkIV, int defIV, int staIV) {
         if (!isConnected) {
             Log.d(TAG, "Not connected to DB!");
             return;
         }
 
+        /*
         int isLegendary = 0;
         if (legendary) {
             isLegendary = 1;
         }
 
+        */
+
         SQLiteDatabase db = niaPokemonWriteDB;
 
         ContentValues values = new ContentValues();
         values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_PKMN_NAME, name);
+        values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_LEVEL, level);
+        values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_CP, CP);
+        values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_PKMN_NAME, name);
+        values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_ATKIV, atkIV);
+        values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_DEFIV, defIV);
+        values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_STAIV, staIV);
+        values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_IVPERCENT, Math.round((atkIV + defIV + staIV)/48));
+
+        /*
         values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_TYPE1, type1);
         values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_TYPE2, type2);
         values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_MAX_CP, cp);
@@ -321,7 +334,7 @@ public class DatabaseHelper {
         values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_DEFENSE, def);
         values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_GENERATION, gen);
         values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_LEGENDARY, isLegendary);
-
+        */
 
         // Insert the new row,
         db.insert(NiaPokemonStatContract.NiaPokemonStatEntry.TABLE_NAME, null, values);
@@ -329,17 +342,22 @@ public class DatabaseHelper {
         Log.d(TAG, "Inserting Nia entry: " + name);
     }
 
-    public void insertNiaPkmn(PGoPokemon pkmn) {
+    public void insertNiaPkmn(PGoPokemon pkmn, double level, int atkIV, int defIV, int staIV) {
 
         // Fetching cpm from database based off of pokemon's level
-        final double maxLevel = 40.0;
-        double cpm = selectCpmByLevel(maxLevel);
+        double cpm = selectCpmByLevel(level);
 
         CalculateCP calculator = new CalculateCP(mContext);
-        int maxCP = calculator.calculate(pkmn, maxLevel, cpm);
+        int CP = calculator.calculate(pkmn, cpm, atkIV, defIV, staIV);
 
         insertNiaStats(
                 pkmn.getName(),
+                level,
+                CP,
+                atkIV,
+                defIV,
+                staIV
+                /*
                 pkmn.getType1(),
                 pkmn.getType2(),
                 maxCP,
@@ -348,10 +366,13 @@ public class DatabaseHelper {
                 pkmn.getDef(),
                 pkmn.getGen(),
                 pkmn.isLegendary()
+                */
         );
 
         Log.d(TAG, "Inserting Nia Entry: " + String.valueOf(pkmn.getName()));
     }
+
+
 
 
     public void insertCpm(double level, double cpm) {
@@ -428,6 +449,13 @@ public class DatabaseHelper {
                 "CREATE TABLE IF NOT EXISTS  " + NiaPokemonStatContract.NiaPokemonStatEntry.TABLE_NAME + " (" +
                         NiaPokemonStatContract.NiaPokemonStatEntry._ID + " INTEGER PRIMARY KEY," +
                         NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_PKMN_NAME + TEXT_TYPE + COMMA_SEP +
+                        NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_LEVEL + REAL_TYPE + COMMA_SEP +
+                        NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_CP + INTEGER_TYPE + COMMA_SEP +
+                        NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_ATKIV + INTEGER_TYPE + COMMA_SEP +
+                        NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_DEFIV + INTEGER_TYPE + COMMA_SEP +
+                        NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_STAIV + INTEGER_TYPE + COMMA_SEP +
+                        NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_IVPERCENT + INTEGER_TYPE +
+                        /*
                         NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_TYPE1 + INTEGER_TYPE + COMMA_SEP +
                         NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_TYPE2 + INTEGER_TYPE + COMMA_SEP +
                         NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_MAX_CP + INTEGER_TYPE + COMMA_SEP +
@@ -436,6 +464,7 @@ public class DatabaseHelper {
                         NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_DEFENSE + REAL_TYPE + COMMA_SEP +
                         NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_GENERATION + INTEGER_TYPE + COMMA_SEP +
                         NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_LEGENDARY+ INTEGER_TYPE +
+                        */
                         " )";
 
         private final String SQL_DELETE_ENTRIES =
