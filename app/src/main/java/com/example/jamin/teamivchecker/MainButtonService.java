@@ -34,6 +34,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import javax.xml.crypto.Data;
+
 public class MainButtonService extends Service implements ScreenshotDetectionDelegate.ScreenshotDetectionListener{
     private static final String TAG = "MainButtonService";
     private WindowManager windowManager;
@@ -68,6 +70,12 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
                 csv.importCPMFromCSV();
                 csv.exportToNiaDatabase();
                 csv.close();
+
+
+                DatabaseHelper mDBHelper = new DatabaseHelper(getApplicationContext());
+                mDBHelper.connect();
+                mDBHelper.getIVs("Dragonite", 3581);
+                
             }
     };
 

@@ -10,10 +10,12 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class DatabaseHelper {
     private static final String TAG = "DatabaseHelper";
@@ -342,34 +344,96 @@ public class DatabaseHelper {
         Log.d(TAG, "Inserting Nia entry: " + name);
     }
 
-    public void insertNiaPkmn(PGoPokemon pkmn, double level, int atkIV, int defIV, int staIV) {
+    public void insertNiaPkmn(PGoPokemon pkmn) {// }, double level, int atkIV, int defIV, int staIV) {
 
-        // Fetching cpm from database based off of pokemon's level
-        double cpm = selectCpmByLevel(level);
 
-        CalculateCP calculator = new CalculateCP(mContext);
-        int CP = calculator.calculate(pkmn, cpm, atkIV, defIV, staIV);
+        for (double level = 0.0; level <= 40.0; level += 0.5) {
+            // Fetching cpm from database based off of pokemon's level
+            double cpm = selectCpmByLevel(level);
 
-        insertNiaStats(
-                pkmn.getName(),
-                level,
-                CP,
-                atkIV,
-                defIV,
-                staIV
-                /*
-                pkmn.getType1(),
-                pkmn.getType2(),
-                maxCP,
-                pkmn.getSta(),
-                pkmn.getAtk(),
-                pkmn.getDef(),
-                pkmn.getGen(),
-                pkmn.isLegendary()
-                */
+            // Now to iterate across IVs. We first test a less intensive case and only try IVs above 12
+            for (int atkIV = 12; atkIV < 16; atkIV++) {
+                for (int defIV = 12; defIV < 16; defIV++) {
+                    for (int staIV = 12; staIV < 16; staIV++) {
+
+                        if (atkIV + defIV + staIV < 45) { // We filter to 93% or higher
+                            continue;
+                        }
+
+                        CalculateCP calculator = new CalculateCP(mContext);
+                        int CP = calculator.calculate(pkmn, cpm, atkIV, defIV, staIV);
+
+                        insertNiaStats(
+                                pkmn.getName(),
+                                level,
+                                CP,
+                                atkIV,
+                                defIV,
+                                staIV
+                        /*
+                        pkmn.getType1(),
+                        pkmn.getType2(),
+                        maxCP,
+                        pkmn.getSta(),
+                        pkmn.getAtk(),
+                        pkmn.getDef(),
+                        pkmn.getGen(),
+                        pkmn.isLegendary()
+                        */
+                        );
+
+                    }
+                }
+            }
+
+            Log.d(TAG, "Inserting Nia Entry: " + String.valueOf(pkmn.getName()));
+        }
+    }
+
+    public ArrayList<PokemonIVs> getIVs(String name, int CP) {
+        ArrayList<PokemonIVs> results = new ArrayList<PokemonIVs>();
+        SQLiteDatabase db = niaPokemonReadDB;
+
+        String[] projection = new String[] {
+                NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_ATKIV,
+                NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_DEFIV,
+                NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_STAIV,
+                NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_LEVEL
+        };
+
+        String sortOrder = null;
+        String selection = NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_PKMN_NAME + " = ?" + " AND " + NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_CP + " = ?"; // Looking for row with this column name
+        String[] selectionArgs = {name.toLowerCase(), String.valueOf(CP)};
+
+        Cursor cursor = db.query(
+                NiaPokemonStatContract.NiaPokemonStatEntry.TABLE_NAME,       // The table to query
+                projection,                                                  // The columns to return
+                selection,                                                   // The columns for the WHERE clause
+                selectionArgs,                                               // The values for the WHERE clause
+                null,                                               // don't group the rows
+                null,                                                // don't filter by row groups
+                sortOrder                                                   // The sort order
         );
 
-        Log.d(TAG, "Inserting Nia Entry: " + String.valueOf(pkmn.getName()));
+
+        int count = cursor.getCount();
+        Log.d(TAG, "Length of pokemonIV cursor: " + String.valueOf(count));
+
+        if (count > 0 ) {
+            cursor.moveToFirst();
+            int atk = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_ATKIV));
+            int def = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_DEFIV));
+            int sta = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_STAIV));
+            double level = cursor.getDouble(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_LEVEL));
+
+            PokemonIVs possibleIV = new PokemonIVs(atk, def, sta, level, CP, name);
+            results.add(possibleIV);
+
+            Log.d(TAG, "Found entry for " + name + "(" + String.valueOf(CP) + "): [" + String.valueOf(atk) + "/" + String.valueOf(def) + "/" + String.valueOf(sta) +" ]");
+        }
+
+        cursor.close();
+        return results;
     }
 
 
