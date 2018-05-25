@@ -250,7 +250,7 @@ public class DatabaseHelper {
 
 
         int count = cursor.getCount();
-        Log.d(TAG, "Length of CPM cursor: " + String.valueOf(count));
+//        Log.d(TAG, "Length of CPM cursor: " + String.valueOf(count));
 
         if (count > 0 ) {
             cursor.moveToFirst();
@@ -341,7 +341,7 @@ public class DatabaseHelper {
         // Insert the new row,
         db.insert(NiaPokemonStatContract.NiaPokemonStatEntry.TABLE_NAME, null, values);
 
-        Log.d(TAG, "Inserting Nia entry: " + name);
+//        Log.d(TAG, "Inserting Nia entry: " + name);
     }
 
     public void insertNiaPkmn(PGoPokemon pkmn) {// }, double level, int atkIV, int defIV, int staIV) {
@@ -356,7 +356,7 @@ public class DatabaseHelper {
                 for (int defIV = 12; defIV < 16; defIV++) {
                     for (int staIV = 12; staIV < 16; staIV++) {
 
-                        if (atkIV + defIV + staIV < 45) { // We filter to 93% or higher
+                        if (atkIV + defIV + staIV < 42) { // We filter to 93% or higher
                             continue;
                         }
 
@@ -386,7 +386,7 @@ public class DatabaseHelper {
                 }
             }
 
-            Log.d(TAG, "Inserting Nia Entry: " + String.valueOf(pkmn.getName()));
+//            Log.d(TAG, "Inserting Nia Entry: " + String.valueOf(pkmn.getName()));
         }
     }
 
@@ -401,7 +401,8 @@ public class DatabaseHelper {
                 NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_LEVEL
         };
 
-        String sortOrder = null;
+        Log.d(TAG, "Looking for : " + String.valueOf(name) + "(" + String.valueOf(CP)+ ")");
+        String sortOrder = NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_IVPERCENT + " DESC";
         String selection = NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_PKMN_NAME + " = ?" + " AND " + NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_CP + " = ?"; // Looking for row with this column name
         String[] selectionArgs = {name.toLowerCase(), String.valueOf(CP)};
 
@@ -421,20 +422,52 @@ public class DatabaseHelper {
 
         if (count > 0 ) {
             cursor.moveToFirst();
-            int atk = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_ATKIV));
-            int def = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_DEFIV));
-            int sta = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_STAIV));
-            double level = cursor.getDouble(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_LEVEL));
+            for (int i = 0; i < count; i++) {
+                int atk = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_ATKIV));
+                int def = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_DEFIV));
+                int sta = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_STAIV));
+                double level = cursor.getDouble(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_LEVEL));
 
-            PokemonIVs possibleIV = new PokemonIVs(atk, def, sta, level, CP, name);
-            results.add(possibleIV);
+                PokemonIVs possibleIV = new PokemonIVs(atk, def, sta, level, CP, name);
+                results.add(possibleIV);
 
-            Log.d(TAG, "Found entry for " + name + "(" + String.valueOf(CP) + "): [" + String.valueOf(atk) + "/" + String.valueOf(def) + "/" + String.valueOf(sta) +" ]");
+                Log.d(TAG, "Found entry for " + name + "(" + String.valueOf(CP) + "): [" + String.valueOf(atk) + "/" + String.valueOf(def) + "/" + String.valueOf(sta) + "]");
+                cursor.moveToNext();
+            }
         }
 
         cursor.close();
         return results;
     }
+
+    // temp method for debugging
+    public boolean doesPkmnExist(String name) {
+        SQLiteDatabase db = niaPokemonReadDB;
+
+        String[] projection = new String[] {
+                NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_LEVEL
+        };
+
+        String sortOrder = null;
+        String selection = NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_PKMN_NAME + " = ?";
+        String[] selectionArgs = {name.toLowerCase()};
+
+        Cursor cursor = db.query(
+                NiaPokemonStatContract.NiaPokemonStatEntry.TABLE_NAME,       // The table to query
+                projection,                                                  // The columns to return
+                selection,                                                   // The columns for the WHERE clause
+                selectionArgs,                                               // The values for the WHERE clause
+                null,                                               // don't group the rows
+                null,                                                // don't filter by row groups
+                sortOrder                                                   // The sort order
+        );
+
+        int count = cursor.getCount();
+
+        cursor.close();
+        return count > 0;
+    }
+
 
 
 
@@ -606,4 +639,32 @@ public class DatabaseHelper {
         Log.d(TAG, "Printing Pokemon Object: {" + pkmn.getName() + "(" + Integer.toString(pkmn.getId()) + "): " + " [" + Type.getName(pkmn.getType1()) + "/" + Type.getName(pkmn.getType2()) + "]:  " + String.valueOf(pkmn.getAttack()) + "/" + String.valueOf(pkmn.getSpAttack()) + "}" );
     }
 
+
+    public void manualSQL(){
+        SQLiteDatabase db = niaPokemonReadDB;
+        Cursor cursor = db.rawQuery("SELECT * FROM " + NiaPokemonStatContract.NiaPokemonStatEntry.TABLE_NAME + " WHERE " + NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_PKMN_NAME + "= 'tyranitar'", null);
+       // Cursor cursor = db.rawQuery("SELECT * FROM " + NiaPokemonStatContract.NiaPokemonStatEntry.TABLE_NAME + " ORDER BY " + NiaPokemonStatContract.NiaPokemonStatEntry._ID + " DESC LIMIT 0, 1", null);
+
+
+
+        int count = cursor.getCount();
+
+        if (count > 0 ) {
+            cursor.moveToFirst();
+            for (int i = 0; i < count; i++) {
+                int atk = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_ATKIV));
+                int def = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_DEFIV));
+                int sta = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_STAIV));
+                double level = cursor.getDouble(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_LEVEL));
+                int cp = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_CP));
+                String name = cursor.getString(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_PKMN_NAME));
+
+
+                Log.d(TAG, "SQLITE: " + name + "(" + String.valueOf(cp) + "/" + String.valueOf(level) + ") [" + String.valueOf(atk) + "/" + String.valueOf(def) + "/" + String.valueOf(sta) + "]");
+                cursor.moveToNext();
+            }
+        }
+
+        cursor.close();
+    }
 }

@@ -136,9 +136,11 @@ public class ImportFromCSV {
 
     public void exportToNiaDatabase() {
         CalculateCP calculator = new CalculateCP(mContext);
-        for (int i = 1; i < 649; i++) {
+       // for (int i = 1; i < 649; i++) { // Uncomment to import database for all gens
+        for (int i = 1; i <= 386; i++) {
             Pokemon pkmn = mDBHelper.selectPokemonById(i);
             PGoPokemon niaPkmn = calculator.convertToNiaPokemon(pkmn);
+            Log.d(TAG, "Inserting Nia Pokemon dex: " + String.valueOf(i) + "(" + niaPkmn.getName() + ")");
             // Insert into database
             mDBHelper.insertNiaPkmn(niaPkmn);
         }

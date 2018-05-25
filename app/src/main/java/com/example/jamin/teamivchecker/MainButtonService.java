@@ -33,8 +33,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 
-import javax.xml.crypto.Data;
 
 public class MainButtonService extends Service implements ScreenshotDetectionDelegate.ScreenshotDetectionListener{
     private static final String TAG = "MainButtonService";
@@ -70,11 +70,6 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
                 csv.importCPMFromCSV();
                 csv.exportToNiaDatabase();
                 csv.close();
-
-
-                DatabaseHelper mDBHelper = new DatabaseHelper(getApplicationContext());
-                mDBHelper.connect();
-                mDBHelper.getIVs("Dragonite", 3581);
                 
             }
     };
@@ -260,17 +255,18 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
         Log.d("onScreenCaptured: ", path);
         ScreenshotEditor editor = new ScreenshotEditor(path, display);
         IntegerPoint[][] gridReferencePoints = editor.constructGrid();
+        int[][] ivThreshold = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}; // Initialize a default 3x3 int grid for determining if each CP is above 93% IV. {0: undefined, 1: below threshold, 2: above threshold, 3: 100% possibility}
 
-/*
         final WindowManager.LayoutParams paramsOverlay = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 PixelFormat.TRANSLUCENT
         );
 
-        mOverlayView = new OverlayView(this, gridReferencePoints);
-        windowManager.addView(mOverlayView, paramsOverlay);
-        isOverlayOn = true;
+        DatabaseHelper mDBHelper = new DatabaseHelper(this);
+        mDBHelper.connect();
+ //        mDBHelper.manualSQL();
+
 
         // Getting the info of all 9 pokemons in the grid
         for (int i = 0; i < 3; i++) {
@@ -279,14 +275,14 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
                 Bitmap nameImg = editor.cropName(gridReferencePoints, i, j);
                 String cp = "Undefined"; // initialize variables
                 String name = "Undefined"; // initialize variables
-                String results = "";
+                String cpString = "";
 
                 if (tessBaseApi != null && croppedImg != null && nameImg != null) {
                     tessBaseApi.setImage(croppedImg);
-                    results = tessBaseApi.getUTF8Text();
+                    cpString = tessBaseApi.getUTF8Text();
 
-                    if (results.length() > 2) {
-                        cp = results.substring(2);
+                    if (cpString.length() > 2) {
+                        cp = cpString.substring(2);
                     } else {
                         Log.d("TESSERACT-OCR", "Invalid CP!");
                         continue;
@@ -296,20 +292,44 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
                     name = tessBaseApi.getUTF8Text();
 
                     Log.d("TESSERACT-OCR", "Name: " + name + ", CP: " + cp);
-                    //  return Integer.valueOf(results); // need to cut off CP prefix first
+
+
+                    ArrayList<PokemonIVs> results = mDBHelper.getIVs(name, Integer.parseInt(cp.trim()));
+                    // Check if name registers in database.
+                    boolean doesExist = mDBHelper.doesPkmnExist(name);
+                    if (!doesExist) {
+                        ivThreshold[i][j] = 0;
+                        continue;
+                    } else {
+                        ivThreshold[i][j] = 1;
+                    }
+
+                    if (results.size() > 0) {
+                        // Found matching IV. Should always happen unless name is mismatched from database. Will implement name correction later
+                        PokemonIVs topIV = results.get(0);
+                        int totalIV = topIV.getAtk() + topIV.getDef() + topIV.getSta();
+                        if (totalIV == 48) { // If it's a candidate for 100%
+                            ivThreshold[i][j] = 3;
+                        } else if (totalIV >= 45) { // at least threshold (93%)
+                            ivThreshold[i][j] = 2;
+                        }
+                    }
+
+
                 }
             }
         }
 
-*/
+
+        mDBHelper.close();
+
+        mOverlayView = new OverlayView(this, gridReferencePoints, ivThreshold);
+        windowManager.addView(mOverlayView, paramsOverlay);
+        isOverlayOn = true;
 
 
 // Test database
-        CalculateCP calculator = new CalculateCP(this);
-        calculator.connectToDB();
-        int CP = calculator.calculateCPByName("Alakazam", 40.0);
-        calculator.close();
-        Log.d(TAG, "Alakazam CP: " + String.valueOf(CP));
+
 
         /*
         DatabaseHelper dbHelper = new DatabaseHelper(this);
