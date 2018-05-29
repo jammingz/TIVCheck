@@ -347,16 +347,16 @@ public class DatabaseHelper {
     public void insertNiaPkmn(PGoPokemon pkmn) {// }, double level, int atkIV, int defIV, int staIV) {
 
 
-        for (double level = 0.0; level <= 40.0; level += 0.5) {
+        for (double level = 1.0; level <= 35.0; level += 0.5) { // Only take ranges from 1-35.
             // Fetching cpm from database based off of pokemon's level
             double cpm = selectCpmByLevel(level);
 
-            // Now to iterate across IVs. We first test a less intensive case and only try IVs above 12
-            for (int atkIV = 12; atkIV < 16; atkIV++) {
-                for (int defIV = 12; defIV < 16; defIV++) {
-                    for (int staIV = 12; staIV < 16; staIV++) {
+            // Now to iterate across IVs. We first test a less intensive case and only try IVs above 13
+            for (int atkIV = 13; atkIV < 16; atkIV++) {
+                for (int defIV = 13; defIV < 16; defIV++) {
+                    for (int staIV = 13; staIV < 16; staIV++) {
 
-                        if (atkIV + defIV + staIV < 42) { // We filter to 93% or higher
+                        if (atkIV + defIV + staIV < 43) { // We filter to 95% or higher
                             continue;
                         }
 
@@ -386,7 +386,7 @@ public class DatabaseHelper {
                 }
             }
 
-//            Log.d(TAG, "Inserting Nia Entry: " + String.valueOf(pkmn.getName()));
+//            Log.d(TAG, "Inserting Nia Entry: " + String.valueOf(pkmn.getName()) + " for level:" + String.valueOf(level));
         }
     }
 

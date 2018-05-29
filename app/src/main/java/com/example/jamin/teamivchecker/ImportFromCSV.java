@@ -1,5 +1,7 @@
 package com.example.jamin.teamivchecker;
 
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.util.Log;
 
@@ -134,10 +136,19 @@ public class ImportFromCSV {
         return 1;
     }
 
-    public void exportToNiaDatabase() {
+    public void exportToNiaDatabase(NotificationManager manager, Notification.Builder builder) {
         CalculateCP calculator = new CalculateCP(mContext);
        // for (int i = 1; i < 649; i++) { // Uncomment to import database for all gens
+
+        int progressCheckPoint = 0;
         for (int i = 1; i <= 386; i++) {
+            // Update notification progress every 2%
+            if (i * 50 / 386 > progressCheckPoint) {
+                progressCheckPoint++;
+                builder.setProgress(100, progressCheckPoint * 2, false);
+                manager.notify(MainButtonService.NOTIFICATION_ID, builder.build());
+            }
+
             Pokemon pkmn = mDBHelper.selectPokemonById(i);
             PGoPokemon niaPkmn = calculator.convertToNiaPokemon(pkmn);
             Log.d(TAG, "Inserting Nia Pokemon dex: " + String.valueOf(i) + "(" + niaPkmn.getName() + ")");

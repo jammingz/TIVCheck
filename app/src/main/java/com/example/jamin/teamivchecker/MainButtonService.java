@@ -1,6 +1,7 @@
 package com.example.jamin.teamivchecker;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
@@ -56,7 +57,8 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
     public static final String lang = "eng";
     public static final String DATA_PATH = Environment.getExternalStorageDirectory().toString() + "/TeamIVChecker/";
 
-    private static final int NOTIFICATION_ID = 1;
+    protected static final int NOTIFICATION_ID = 1;
+    private Notification.Builder mNotificationBuilder;
     private static final String SHARED_PREFERENCE_KEY = "com.example.jamin.teamivchecker.PREFERENCE_FILE_KEY";
 
 
@@ -68,8 +70,14 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
                 ImportFromCSV csv = new ImportFromCSV(getApplicationContext());
                 csv.importFromCSV();
                 csv.importCPMFromCSV();
-                csv.exportToNiaDatabase();
+
+
+                NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                csv.exportToNiaDatabase(mNotificationManager, mNotificationBuilder);
                 csv.close();
+
+               // Remove notification
+                mNotificationManager.cancel(NOTIFICATION_ID);
                 
             }
     };
@@ -233,11 +241,14 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
             new Thread(runnable).start();
 
             // prepare a notification for user and start service foreground
-            Notification notification = new Notification.Builder(getApplicationContext())
+            mNotificationBuilder = new Notification.Builder(getApplicationContext())
                     .setContentTitle(getString(R.string.app_name))
-                    .setContentText("Filling Database")
+                    .setContentText("Generating Database")
                     .setSmallIcon(R.drawable.ic_sentiment_satisfied_black_24dp)
-                    .build();
+                    .setOngoing(true)
+                    .setProgress(100, 0, false);
+
+            Notification notification = mNotificationBuilder.build();
 
             // this will ensure your service won't be killed by Android
             startForeground(NOTIFICATION_ID, notification);
@@ -291,7 +302,7 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
                     tessBaseApi.setImage(nameImg);
                     name = tessBaseApi.getUTF8Text();
 
-                    Log.d("TESSERACT-OCR", "Name: " + name + ", CP: " + cp);
+                    Log.d("TESSERACT-OCR", "String: " + cpString + ", Name: " + name + ", CP: " + cp);
 
 
                     ArrayList<PokemonIVs> results = mDBHelper.getIVs(name, Integer.parseInt(cp.trim()));
@@ -308,9 +319,9 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
                         // Found matching IV. Should always happen unless name is mismatched from database. Will implement name correction later
                         PokemonIVs topIV = results.get(0);
                         int totalIV = topIV.getAtk() + topIV.getDef() + topIV.getSta();
-                        if (totalIV == 48) { // If it's a candidate for 100%
+                        if (totalIV == 45) { // If it's a candidate for 100%
                             ivThreshold[i][j] = 3;
-                        } else if (totalIV >= 45) { // at least threshold (93%)
+                        } else if (totalIV >= 43) { // at least threshold (95%)
                             ivThreshold[i][j] = 2;
                         }
                     }
