@@ -67,19 +67,19 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
-                ImportFromCSV csv = new ImportFromCSV(getApplicationContext());
-                csv.importFromCSV();
-                csv.importCPMFromCSV();
+            ImportFromCSV csv = new ImportFromCSV(getApplicationContext());
+            csv.importFromCSV();
+            csv.importCPMFromCSV();
 
 
-                NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                csv.exportToNiaDatabase(mNotificationManager, mNotificationBuilder);
-                csv.close();
+            NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            csv.exportToNiaDatabase(mNotificationManager, mNotificationBuilder);
+            csv.close();
 
-               // Remove notification
-                mNotificationManager.cancel(NOTIFICATION_ID);
-                
-            }
+            // Remove notification
+            mNotificationManager.cancel(NOTIFICATION_ID);
+
+        }
     };
 
     private ScreenshotDetectionDelegate screenshotDetectionDelegate = new ScreenshotDetectionDelegate(this, this);
@@ -138,7 +138,7 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
 
                 Log.d("MainButtonService", "Copied " + lang + " traineddata");
             } catch (IOException e) {
-                 Log.d("MainButtonService", "Was unable to copy " + lang + " traineddata " + e.toString());
+                Log.d("MainButtonService", "Was unable to copy " + lang + " traineddata " + e.toString());
             }
 
         }
@@ -276,7 +276,7 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
 
         DatabaseHelper mDBHelper = new DatabaseHelper(this);
         mDBHelper.connect();
- //        mDBHelper.manualSQL();
+        //        mDBHelper.manualSQL();
 
 
         // Getting the info of all 9 pokemons in the grid
@@ -305,15 +305,37 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
                     Log.d("TESSERACT-OCR", "String: " + cpString + ", Name: " + name + ", CP: " + cp);
 
 
-                    ArrayList<PokemonIVs> results = mDBHelper.getIVs(name, Integer.parseInt(cp.trim()));
+
                     // Check if name registers in database.
                     boolean doesExist = mDBHelper.doesPkmnExist(name);
                     if (!doesExist) {
-                        ivThreshold[i][j] = 0;
-                        continue;
+                        // if name is not found (probably from OCR error, we use levenshtein
+                        int bestDist = 100000; // Large distance as default
+                        String bestMatch = "";
+                        for (int k = 0; k < PokemonList.names.length; k++) {
+                            String curName = PokemonList.names[k].toLowerCase();
+                            int levDist = Levenshtein.distance(name, curName);
+                            if (levDist < bestDist) {
+                                bestDist = levDist;
+                                bestMatch = curName;
+                            }
+
+                            if (levDist == 0) { // This should never happen
+                                Log.d(TAG, "Lev found distance 0! SOMETHING IS WRONG!");
+                                return;
+                            }
+                        }
+                        Log.d(TAG, "Lev replaced '" + name + "' with '" + bestMatch + "'");
+                        name = bestMatch; // overwrite the OCR name with the best matching name
+                        //           ivThreshold[i][j] = 0;
+                        //           continue;
                     } else {
                         ivThreshold[i][j] = 1;
                     }
+
+
+
+                    ArrayList<PokemonIVs> results = mDBHelper.getIVs(name, Integer.parseInt(cp.trim()));
 
                     if (results.size() > 0) {
                         // Found matching IV. Should always happen unless name is mismatched from database. Will implement name correction later
