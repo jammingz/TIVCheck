@@ -20,7 +20,13 @@ public class OverlayView extends View {
     int[][] threshold;
     private final String TAG = "OverlayView";
 
-    public OverlayView(Context context, IntegerPoint[][] grid, int[][] ivThreshold) {
+    // Debugging variables
+    private Paint debugPaintCP;
+    private Paint debugPaintMaxIV;
+    private OCRData[][] debugData;
+
+
+    public OverlayView(Context context, IntegerPoint[][] grid, int[][] ivThreshold, OCRData[][] debugData) {
         super(context);
 
         // DEBUGGING INFO:
@@ -68,6 +74,17 @@ public class OverlayView extends View {
         undefinedThreshPaint.setStyle(Paint.Style.FILL_AND_STROKE);
         undefinedThreshPaint.setColor(0x90a6a6a6);
 
+        debugPaintCP = new Paint();
+        debugPaintCP.setTextAlign(Paint.Align.CENTER);
+        debugPaintCP.setColor(0x003366); // navy blue
+        debugPaintCP.setTextSize(50);
+
+        debugPaintMaxIV = new Paint();
+        debugPaintMaxIV.setTextAlign(Paint.Align.RIGHT);
+        debugPaintMaxIV.setColor(0x003366); // navy blue
+        debugPaintMaxIV.setTextSize(30);
+
+        this.debugData = debugData;
         Log.d("OverlayView", "OverlayView Initialized");
     }
 
@@ -76,14 +93,25 @@ public class OverlayView extends View {
         super.onDraw(canvas);
         for (int i = 0; i < rectangles.length; i++) {
             for (int j = 0; j < rectangles[0].length; j++) {
+                Rect curRect = rectangles[i][j];
+                int cpXPos = curRect.left + 20;
+                int cpYPos = curRect.top + 20;
+                int ivXPos  = curRect.right - 65;
+                int ivYPos = curRect.top + 20;
+                String cp = debugData[i][j].getCP();
+                String iv = debugData[i][j].getIV();
+
+                canvas.drawText(cp, cpXPos, cpYPos, debugPaintCP);
+                canvas.drawText(iv, ivXPos, ivYPos, debugPaintMaxIV);
+
                 switch (threshold[i][j]) {
-                    case 0: canvas.drawRect(rectangles[i][j], undefinedThreshPaint);
+                    case 0: canvas.drawRect(curRect, undefinedThreshPaint);
                             break;
-                    case 1: canvas.drawRect(rectangles[i][j], belowThresPaint);
+                    case 1: canvas.drawRect(curRect, belowThresPaint);
                             break;
-                    case 2: canvas.drawRect(rectangles[i][j], aboveThresPaint);
+                    case 2: canvas.drawRect(curRect, aboveThresPaint);
                             break;
-                    case 3: canvas.drawRect(rectangles[i][j], perfectPaint);
+                    case 3: canvas.drawRect(curRect, perfectPaint);
                          break;
 
 

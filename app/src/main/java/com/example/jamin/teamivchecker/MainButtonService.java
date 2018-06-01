@@ -267,6 +267,7 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
         ScreenshotEditor editor = new ScreenshotEditor(path, display);
         IntegerPoint[][] gridReferencePoints = editor.constructGrid();
         int[][] ivThreshold = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}; // Initialize a default 3x3 int grid for determining if each CP is above 93% IV. {0: undefined, 1: below threshold, 2: above threshold, 3: 100% possibility}
+        OCRData debugData[][] = {{new OCRData(), new OCRData(), new OCRData()},{new OCRData(), new OCRData(), new OCRData()},{new OCRData(), new OCRData(), new OCRData()}};
 
         final WindowManager.LayoutParams paramsOverlay = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
@@ -337,10 +338,11 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
 
                     ArrayList<PokemonIVs> results = mDBHelper.getIVs(name, Integer.parseInt(cp.trim()));
 
+                    int totalIV = -1;
                     if (results.size() > 0) {
                         // Found matching IV. Should always happen unless name is mismatched from database. Will implement name correction later
                         PokemonIVs topIV = results.get(0);
-                        int totalIV = topIV.getAtk() + topIV.getDef() + topIV.getSta();
+                        totalIV = topIV.getAtk() + topIV.getDef() + topIV.getSta();
                         if (totalIV == 45) { // If it's a candidate for 100%
                             ivThreshold[i][j] = 3;
                         } else if (totalIV >= 43) { // at least threshold (95%)
@@ -348,6 +350,7 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
                         }
                     }
 
+                    debugData[i][j] = new OCRData(cp, String.valueOf(totalIV));
 
                 }
             }
@@ -356,7 +359,7 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
 
         mDBHelper.close();
 
-        mOverlayView = new OverlayView(this, gridReferencePoints, ivThreshold);
+        mOverlayView = new OverlayView(this, gridReferencePoints, ivThreshold, debugData);
         windowManager.addView(mOverlayView, paramsOverlay);
         isOverlayOn = true;
 
@@ -406,5 +409,7 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
 
         screenshotDetectionDelegate.stopScreenshotDetection();
     }
+
+
 
 }
