@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.util.Log;
 import android.view.View;
 
@@ -76,13 +77,17 @@ public class OverlayView extends View {
 
         debugPaintCP = new Paint();
         debugPaintCP.setTextAlign(Paint.Align.CENTER);
-        debugPaintCP.setColor(0x003366); // navy blue
-        debugPaintCP.setTextSize(50);
+        debugPaintCP.setStyle(Paint.Style.FILL);
+        debugPaintCP.setColor(Color.parseColor("#003366")); // navy blue
+        debugPaintCP.setTextSize(45);
+        debugPaintCP.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
 
         debugPaintMaxIV = new Paint();
-        debugPaintMaxIV.setTextAlign(Paint.Align.RIGHT);
-        debugPaintMaxIV.setColor(0x003366); // navy blue
-        debugPaintMaxIV.setTextSize(30);
+        debugPaintMaxIV.setTextAlign(Paint.Align.CENTER);
+        debugPaintMaxIV.setStyle(Paint.Style.FILL);
+        debugPaintMaxIV.setColor(Color.parseColor("#003366")); // navy blue
+        debugPaintMaxIV.setTextSize(40);
+        debugPaintMaxIV.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
 
         this.debugData = debugData;
         Log.d("OverlayView", "OverlayView Initialized");
@@ -94,15 +99,14 @@ public class OverlayView extends View {
         for (int i = 0; i < rectangles.length; i++) {
             for (int j = 0; j < rectangles[0].length; j++) {
                 Rect curRect = rectangles[i][j];
-                int cpXPos = curRect.left + 20;
-                int cpYPos = curRect.top + 20;
-                int ivXPos  = curRect.right - 65;
-                int ivYPos = curRect.top + 20;
+                int cpXPos = curRect.left + 60;// + 20;
+                int cpYPos = curRect.top + 50;// + 20;
+                int ivXPos  = curRect.right - 65;//- 65;
+                int ivYPos = curRect.top + 50;// + 20;
                 String cp = debugData[i][j].getCP();
                 String iv = debugData[i][j].getIV();
-
-                canvas.drawText(cp, cpXPos, cpYPos, debugPaintCP);
-                canvas.drawText(iv, ivXPos, ivYPos, debugPaintMaxIV);
+                canvas.drawText("" + cp, cpXPos, cpYPos, debugPaintCP);
+                canvas.drawText(iv+"%", ivXPos, ivYPos, debugPaintMaxIV);
 
                 switch (threshold[i][j]) {
                     case 0: canvas.drawRect(curRect, undefinedThreshPaint);

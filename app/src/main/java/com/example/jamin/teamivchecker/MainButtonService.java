@@ -57,6 +57,8 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
     public static final String lang = "eng";
     public static final String DATA_PATH = Environment.getExternalStorageDirectory().toString() + "/TeamIVChecker/";
 
+    private TessBaseAPI numTessBaseApi; // for numbers-only
+
     protected static final int NOTIFICATION_ID = 1;
     private Notification.Builder mNotificationBuilder;
     private static final String SHARED_PREFERENCE_KEY = "com.example.jamin.teamivchecker.PREFERENCE_FILE_KEY";
@@ -145,6 +147,7 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
 
         // Load train data from SD card
         tessBaseApi = new TessBaseAPI(); // AssetManager assetManager=
+        numTessBaseApi = new TessBaseAPI();
         String datapath = Environment.getExternalStorageDirectory() + "/TeamIVChecker/";
         String language = "eng";
         // AssetManager assetManager = getAssets();
@@ -152,6 +155,10 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
         if (!dir.exists())
             dir.mkdirs();
         tessBaseApi.init(datapath, language);
+        numTessBaseApi.setPageSegMode(TessBaseAPI.PageSegMode.PSM_OSD_ONLY);
+        numTessBaseApi.setVariable(TessBaseAPI.VAR_CHAR_WHITELIST,"0123456789");
+        numTessBaseApi.setVariable(TessBaseAPI.VAR_CHAR_BLACKLIST,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmopqrstuvwxyz");
+        numTessBaseApi.init(datapath, language);
         isOverlayOn = false;
 
 
@@ -289,9 +296,9 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
                 String name = "Undefined"; // initialize variables
                 String cpString = "";
 
-                if (tessBaseApi != null && croppedImg != null && nameImg != null) {
-                    tessBaseApi.setImage(croppedImg);
-                    cpString = tessBaseApi.getUTF8Text();
+                if (tessBaseApi != null && numTessBaseApi != null && croppedImg != null && nameImg != null) {
+                    numTessBaseApi.setImage(croppedImg);
+                    cpString = numTessBaseApi.getUTF8Text();
 
                     if (cpString.length() > 2) {
                         cp = cpString.substring(2);
@@ -303,7 +310,7 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
                     tessBaseApi.setImage(nameImg);
                     name = tessBaseApi.getUTF8Text();
 
-                    Log.d("TESSERACT-OCR", "String: " + cpString + ", Name: " + name + ", CP: " + cp);
+                    Log.d("TESSERACT-OCR", "String: " + cpString + ", Name: " + name + ", CP: " + cpString);
 
 
 
@@ -350,7 +357,8 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
                         }
                     }
 
-                    debugData[i][j] = new OCRData(cp, String.valueOf(totalIV));
+                    Log.d(TAG, "DEBUG: CP: " + cp + " , IV: " + String.valueOf(totalIV));
+                    debugData[i][j] = new OCRData(cp, String.valueOf(Math.round((totalIV/45.0) * 1000)/10)); // String converts IV to percentage with 1 decimal point
 
                 }
             }
