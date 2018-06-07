@@ -325,7 +325,7 @@ public class DatabaseHelper {
         values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_ATKIV, atkIV);
         values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_DEFIV, defIV);
         values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_STAIV, staIV);
-        values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_IVPERCENT, Math.round((atkIV + defIV + staIV)/48));
+        values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_IVPERCENT, Math.round((atkIV + defIV + staIV) * 100 / 48));
 
         /*
         values.put(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_TYPE1, type1);
@@ -398,7 +398,8 @@ public class DatabaseHelper {
                 NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_ATKIV,
                 NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_DEFIV,
                 NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_STAIV,
-                NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_LEVEL
+                NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_LEVEL,
+                NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_IVPERCENT
         };
 
         Log.d(TAG, "Looking for : " + String.valueOf(name) + "(" + String.valueOf(CP)+ ")");
@@ -427,11 +428,12 @@ public class DatabaseHelper {
                 int def = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_DEFIV));
                 int sta = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_STAIV));
                 double level = cursor.getDouble(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_LEVEL));
+                int iv = cursor.getInt(cursor.getColumnIndex(NiaPokemonStatContract.NiaPokemonStatEntry.COLUMN_NAME_IVPERCENT));
 
                 PokemonIVs possibleIV = new PokemonIVs(atk, def, sta, level, CP, name);
                 results.add(possibleIV);
 
-                Log.d(TAG, "Found entry for " + name + "(" + String.valueOf(CP) + "): [" + String.valueOf(atk) + "/" + String.valueOf(def) + "/" + String.valueOf(sta) + "]");
+                Log.d(TAG, "Found entry for " + name + "(" + String.valueOf(CP) + "): [" + String.valueOf(atk) + "/" + String.valueOf(def) + "/" + String.valueOf(sta) + "](" + String.valueOf(iv) + "%)");
                 cursor.moveToNext();
             }
         }

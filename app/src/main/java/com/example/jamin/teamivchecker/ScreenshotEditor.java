@@ -20,6 +20,9 @@ public class ScreenshotEditor {
     int height;
     int width;
 
+    public static final int MAXIMUM_ROW_COUNT = 4;      // Number of rows of pokemon to OCR
+    public static final int MAXIMUM_COLUMN_COUNT = 3;   // Number of columns of pokemon to OCR
+
     public ScreenshotEditor(String path, Display display) {
         File imageFile = new File(path);
         mBitmap = null; // Default is null
@@ -71,10 +74,10 @@ public class ScreenshotEditor {
         // BottomRight: (359,721)
         //  TopLeft: (371,721)
         // scrollview top border starts at y=270
-        IntegerPoint[][] results = new IntegerPoint[3][3]; // Initialize as empty array of 9 empty points.
+        IntegerPoint[][] results = new IntegerPoint[MAXIMUM_COLUMN_COUNT][MAXIMUM_ROW_COUNT]; // Initialize as empty array of 9 empty points.
 
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
+        for (int i = 0; i < MAXIMUM_COLUMN_COUNT; i++) {
+            for (int j = 0; j < MAXIMUM_ROW_COUNT; j++) {
                 results[i][j] = new IntegerPoint();
             }
         }
@@ -85,23 +88,23 @@ public class ScreenshotEditor {
 
         // Determine pointOfReference's position in the array
         int arrayXPos = refX / 342; // width of frame(330) + 12 pixel gap. Means it's arrayXPosition from the left of the screen
-        int arrayYPos = (refY - 270 - 358) / 391; // arrayYPositions from the top of the scrollView. 270 is the length of margin above the scrollView. 358 is the length of the top of rectangle to the health bar
+        int arrayYPos = ((refY - 270 - 358 - 328) / 391) + 1; // arrayYPositions from the top of the scrollView. 270 is the length of margin above the scrollView. 358 is the length of the top of rectangle to the health bar
 
 
         // Get the first(top left corner) position's coordinates
         int x = refX - 165 - 342 * arrayXPos; // 165 is the length between current X position and the left border
         int y = refY - 358 - 391 * arrayYPos; // 358 is the length between HP bar and the top border
 
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
+        for (int i = 0; i < MAXIMUM_COLUMN_COUNT; i++) {
+            for (int j = 0; j < MAXIMUM_ROW_COUNT; j++) {
                 results[i][j] = new IntegerPoint(x + 342 * i, y + 391 * j);
             }
         }
 
 
         String debugString = "[";
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
+        for (int i = 0; i < MAXIMUM_COLUMN_COUNT; i++) {
+            for (int j = 0; j < MAXIMUM_ROW_COUNT; j++) {
                 IntegerPoint pointOfInterest = results[i][j];
                 debugString += "(" + String.valueOf(pointOfInterest.getX()) + "," + String.valueOf(pointOfInterest.getY()) + "), ";
             }
@@ -143,6 +146,7 @@ public class ScreenshotEditor {
 
 
     /*
+
      *  Unused Methods that may be important
      */
 

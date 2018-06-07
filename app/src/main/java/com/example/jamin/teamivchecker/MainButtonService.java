@@ -273,8 +273,16 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
         Log.d("onScreenCaptured: ", path);
         ScreenshotEditor editor = new ScreenshotEditor(path, display);
         IntegerPoint[][] gridReferencePoints = editor.constructGrid();
-        int[][] ivThreshold = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}; // Initialize a default 3x3 int grid for determining if each CP is above 93% IV. {0: undefined, 1: below threshold, 2: above threshold, 3: 100% possibility}
-        OCRData debugData[][] = {{new OCRData(), new OCRData(), new OCRData()},{new OCRData(), new OCRData(), new OCRData()},{new OCRData(), new OCRData(), new OCRData()}};
+        int[][] ivThreshold = new int[ScreenshotEditor.MAXIMUM_COLUMN_COUNT][ScreenshotEditor.MAXIMUM_ROW_COUNT]; // Initialize a default column x row int grid for determining if each CP is above 95% IV. {0: undefined, 1: below threshold, 2: above threshold, 3: 100% possibility}
+        OCRData debugData[][] = new OCRData[ScreenshotEditor.MAXIMUM_COLUMN_COUNT][ScreenshotEditor.MAXIMUM_ROW_COUNT]; // Initialize the 2D arrray
+
+        // Fill debugData 2D array with default filler OCRData objects
+        for (int i = 0; i < ScreenshotEditor.MAXIMUM_COLUMN_COUNT; i++) {
+            for (int j = 0; j < ScreenshotEditor.MAXIMUM_ROW_COUNT; j++) {
+                debugData[i][j] = new OCRData();
+            }
+        }
+
 
         final WindowManager.LayoutParams paramsOverlay = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
@@ -287,9 +295,9 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
         //        mDBHelper.manualSQL();
 
 
-        // Getting the info of all 9 pokemons in the grid
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
+        // Getting the info of all pokemons in the grid
+        for (int i = 0; i < ScreenshotEditor.MAXIMUM_COLUMN_COUNT; i++) {
+            for (int j = 0; j < ScreenshotEditor.MAXIMUM_ROW_COUNT; j++) {
                 Bitmap croppedImg = editor.cropImage(gridReferencePoints, i, j);
                 Bitmap nameImg = editor.cropName(gridReferencePoints, i, j);
                 String cp = "Undefined"; // initialize variables
