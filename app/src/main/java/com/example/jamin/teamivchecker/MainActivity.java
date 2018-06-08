@@ -18,6 +18,7 @@ public class MainActivity extends ScreenshotDetectionActivity {
         super.onCreate(savedInstanceState);
         //setContentView(R.layout.activity_main);
         checkDrawOverlayPermission();
+        // moveTaskToBack(true);
 
         // Screenshot detector credits from https://github.com/abangfadli/shotwatch
         /*
@@ -45,6 +46,7 @@ public class MainActivity extends ScreenshotDetectionActivity {
             startActivityForResult(intent, REQUEST_CODE);
         } else {
             startService(new Intent(getApplicationContext(), MainButtonService.class));
+            finish();
         }
     }
 
@@ -86,9 +88,9 @@ public class MainActivity extends ScreenshotDetectionActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Toast.makeText(this, "Stopping service", Toast.LENGTH_SHORT).show();
-        Intent intent = new Intent(this, MainButtonService.class);
-        stopService(intent);
+        // Toast.makeText(this, "Stopping service", Toast.LENGTH_SHORT).show();
+        // Intent intent = new Intent(this, MainButtonService.class);
+        // stopService(intent);
     }
 
     @Override

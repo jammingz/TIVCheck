@@ -221,6 +221,11 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
                             initialTouchY = event.getRawY();
                             return true;
                         case MotionEvent.ACTION_UP:
+                            if (params.x < 600 && params.x > 450 && params.y < 1600 && params.y > 1400) {
+                                // exit service
+                                finish();
+                            }
+
                             return true;
                         case MotionEvent.ACTION_MOVE:
                             params.x = initialX + (int) (event.getRawX() - initialTouchX);
@@ -441,4 +446,9 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
         return sb.toString();
     }
 
+
+    public void finish() {
+        this.stopSelf();
+        Log.d(TAG, "MainButtonService stopSelf()");
+    }
 }
