@@ -191,6 +191,9 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
                     // single tap
                     Log.d("MainButtonService", "onClick() triggered");
 
+                    Bitmap screenshot = takeScreenshot(v);
+
+
                     /*
                     View rootView = v.getRootView();
                     store(getScreenShot(rootView), "TestSS01.PNG");
@@ -446,6 +449,16 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
         return sb.toString();
     }
 
+
+    public Bitmap takeScreenshot(View v) {
+        View rootView = v.getRootView();
+        rootView.setDrawingCacheEnabled(true);
+        rootView.buildDrawingCache(true);
+        Bitmap bmp = Bitmap.createBitmap(rootView.getDrawingCache());
+        rootView.setDrawingCacheEnabled(false);
+        return bmp;
+
+    }
 
     public void finish() {
         this.stopSelf();
