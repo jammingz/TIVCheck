@@ -38,6 +38,17 @@ public class ScreenshotEditor {
     }
 
 
+    public ScreenshotEditor(Bitmap screenshot, Display display) {
+        mBitmap = screenshot;
+
+        Point size = new Point();
+        display.getSize(size);
+        width = size.x;
+        height = size.y;
+
+    }
+
+
     public boolean isEqual(RGBColor a, RGBColor b) {
         if (Math.abs(a.getBlue() - b.getBlue()) < 5 && Math.abs(a.getGreen() - b.getGreen()) < 5 && Math.abs(a.getRed() - b.getRed()) < 5) { // if the RGB values are closely similar
             return true;
