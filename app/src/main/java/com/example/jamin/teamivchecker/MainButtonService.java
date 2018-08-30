@@ -71,6 +71,7 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
     private TessBaseAPI numTessBaseApi; // for numbers-only
 
     protected static final int NOTIFICATION_ID = 1;
+    protected static final int NOTIFICATION_ID2 = 2;
     private Notification.Builder mNotificationBuilder;
     private static final String SHARED_PREFERENCE_KEY = "com.example.jamin.teamivchecker.PREFERENCE_FILE_KEY";
 
@@ -747,6 +748,16 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
 
             // register media projection stop callback
             mMediaProjection.registerCallback(new MediaProjectionStopCallback(), mHandler);
+
+
+            // prepare a notification for user and start service foreground
+            Notification.Builder mBuilder = new Notification.Builder(getApplicationContext())
+                    .setSmallIcon(R.drawable.ic_sentiment_satisfied_black_24dp)
+                    .setAutoCancel(true);
+
+
+            NotificationManager mNotificationManager =  getSystemService(NotificationManager.class);
+            mNotificationManager.notify(NOTIFICATION_ID2, mBuilder.build());
         }
     }
 
@@ -760,6 +771,8 @@ public class MainButtonService extends Service implements ScreenshotDetectionDel
             }
         });
         screenCaptureLock = false; // release lock
+        NotificationManager mNotificationManager =  getSystemService(NotificationManager.class);
+        mNotificationManager.cancel(NOTIFICATION_ID2);
     }
 
     private void showStatusIcon() {

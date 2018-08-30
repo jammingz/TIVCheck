@@ -20,8 +20,15 @@ public class ScreenshotEditor {
     int height;
     int width;
 
+    public static final int STORAGE_SCREEN = 0;
+    public static final int STORAGE_SCREEN_WITH_SEARCH = 1;
+    public static final int STATS_DETAIL_SCREEN = 2;
+
     public static final int MAXIMUM_ROW_COUNT = 4;      // Number of rows of pokemon to OCR
+    public static final int MINIMUM_ROW_COUNT = 3;
     public static final int MAXIMUM_COLUMN_COUNT = 3;   // Number of columns of pokemon to OCR
+
+    private int screenType;
 
     public ScreenshotEditor(String path, Display display) {
         File imageFile = new File(path);
@@ -35,6 +42,8 @@ public class ScreenshotEditor {
         display.getSize(size);
         width = size.x;
         height = size.y;
+
+        screenType = determineScreenCapture();
     }
 
 
@@ -46,6 +55,7 @@ public class ScreenshotEditor {
         width = size.x;
         height = size.y;
 
+        screenType = determineScreenCapture();
     }
 
 
@@ -54,6 +64,28 @@ public class ScreenshotEditor {
             return true;
         }
         return false;
+    }
+
+
+    public int determineScreenCapture() {
+        int detailScreenX = 540;
+        int detailScreenY = 1196;
+        RGBColor detailScreenTarget = new RGBColor(225,225,225);
+        RGBColor detailScreenTarget2 = new RGBColor(245,245,245); // There are two colors to check for
+
+        if (isEqual(getRGB(detailScreenX, detailScreenY), detailScreenTarget) || isEqual(getRGB(detailScreenX, detailScreenY), detailScreenTarget2)) {
+            return STATS_DETAIL_SCREEN;
+        }
+
+        int screenWithSearchX = 722;
+        int screenWithSearchY = 388;
+        RGBColor screenWithSearchTarget = new RGBColor(70,105,108);
+
+        if (isEqual(getRGB(screenWithSearchX, screenWithSearchY), screenWithSearchTarget)) {
+            return STORAGE_SCREEN_WITH_SEARCH;
+        }
+
+        return STORAGE_SCREEN;
     }
 
     public IntegerPoint[][] constructGrid() {
@@ -85,10 +117,18 @@ public class ScreenshotEditor {
         // BottomRight: (359,721)
         //  TopLeft: (371,721)
         // scrollview top border starts at y=270
-        IntegerPoint[][] results = new IntegerPoint[MAXIMUM_COLUMN_COUNT][MAXIMUM_ROW_COUNT]; // Initialize as empty array of 9 empty points.
 
-        for (int i = 0; i < MAXIMUM_COLUMN_COUNT; i++) {
-            for (int j = 0; j < MAXIMUM_ROW_COUNT; j++) {
+        int columnSize = MAXIMUM_COLUMN_COUNT;
+        int rowSize = MAXIMUM_ROW_COUNT;
+
+        if (screenType == STORAGE_SCREEN_WITH_SEARCH) {
+            rowSize = MINIMUM_ROW_COUNT;
+        }
+
+        IntegerPoint[][] results = new IntegerPoint[columnSize][rowSize]; // Initialize as empty array of 9 empty points.
+
+        for (int i = 0; i < columnSize; i++) {
+            for (int j = 0; j < rowSize; j++) {
                 results[i][j] = new IntegerPoint();
             }
         }
@@ -101,21 +141,24 @@ public class ScreenshotEditor {
         int arrayXPos = refX / 342; // width of frame(330) + 12 pixel gap. Means it's arrayXPosition from the left of the screen
         int arrayYPos = ((refY - 270 - 358 - 328) / 391) + 1; // arrayYPositions from the top of the scrollView. 270 is the length of margin above the scrollView. 358 is the length of the top of rectangle to the health bar
 
+        if (screenType == STORAGE_SCREEN_WITH_SEARCH) {
+            arrayYPos = ((refY - 410 - 358 - 328) / 391) + 1; // the margin above scrollview becomes 410 with the search bar offset
+        }
 
         // Get the first(top left corner) position's coordinates
         int x = refX - 165 - 342 * arrayXPos; // 165 is the length between current X position and the left border
         int y = refY - 358 - 391 * arrayYPos; // 358 is the length between HP bar and the top border
 
-        for (int i = 0; i < MAXIMUM_COLUMN_COUNT; i++) {
-            for (int j = 0; j < MAXIMUM_ROW_COUNT; j++) {
+        for (int i = 0; i < columnSize; i++) {
+            for (int j = 0; j < rowSize; j++) {
                 results[i][j] = new IntegerPoint(x + 342 * i, y + 391 * j);
             }
         }
 
 
         String debugString = "[";
-        for (int i = 0; i < MAXIMUM_COLUMN_COUNT; i++) {
-            for (int j = 0; j < MAXIMUM_ROW_COUNT; j++) {
+        for (int i = 0; i < columnSize; i++) {
+            for (int j = 0; j < rowSize; j++) {
                 IntegerPoint pointOfInterest = results[i][j];
                 debugString += "(" + String.valueOf(pointOfInterest.getX()) + "," + String.valueOf(pointOfInterest.getY()) + "), ";
             }
@@ -130,7 +173,7 @@ public class ScreenshotEditor {
     }
 
 
-
+    // Crops CP
     public Bitmap cropImage(IntegerPoint[][] positions, int indexX, int indexY) {
         if (mBitmap != null) {
             IntegerPoint origin = positions[indexX][indexY];
@@ -143,6 +186,7 @@ public class ScreenshotEditor {
         return null;
     }
 
+    // Crops Name
     public Bitmap cropName(IntegerPoint[][] positions, int indexX, int indexY) {
         if (mBitmap != null) {
             IntegerPoint origin = positions[indexX][indexY];
@@ -154,6 +198,43 @@ public class ScreenshotEditor {
 
         return null;
     }
+
+    public Bitmap cropDetailCP() {
+        if (mBitmap != null) {
+            Bitmap croppedBmp = Bitmap.createBitmap(mBitmap, 370, 115 , 300 , 80);
+            return croppedBmp;
+        }
+
+        return null;
+    }
+
+    public Bitmap cropDetailName() {
+        if (mBitmap != null) {
+            Bitmap croppedBmp = Bitmap.createBitmap(mBitmap, 305, 819 , 440 , 56);
+            return croppedBmp;
+        }
+
+        return null;
+    }
+
+    public Bitmap cropDetailHp() {
+        if (mBitmap != null) {
+            Bitmap croppedBmp = Bitmap.createBitmap(mBitmap, 455, 940 , 55 , 25);
+            return croppedBmp;
+        }
+
+        return null;
+    }
+
+    public Bitmap cropDetailDust() {
+        if (mBitmap != null) {
+            Bitmap croppedBmp = Bitmap.createBitmap(mBitmap, 590, 1425 , 110 , 40);
+            return croppedBmp;
+        }
+
+        return null;
+    }
+
 
 
     /*
